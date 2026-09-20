@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tourism Safety Authority Console — SafeTour AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="admin-body">
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <!-- Admin Authentication Gate Modal -->
+  <div id="adminAuthModal" class="auth-modal-backdrop" style="display: flex; position: fixed; inset: 0; z-index: 99999; background: rgba(10, 15, 29, 0.94); backdrop-filter: blur(12px); align-items: center; justify-content: center; padding: 20px;">
+    <div class="auth-card" style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 18px; max-width: 440px; width: 100%; padding: 32px; box-shadow: 0 0 40px rgba(2, 132, 199, 0.35); text-align: center;">
+      <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #0284c7, #0369a1); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; font-size: 1.6rem; color: #fff; box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);">
+        <i class="fa-solid fa-user-shield"></i>
+      </div>
+      <h2 style="font-size: 1.3rem; font-weight: 700; color: #f8fafc; margin-bottom: 6px;">Tourism Safety Authority</h2>
+      <p style="font-size: 0.82rem; color: #94a3b8; margin-bottom: 20px;">Restricted Officer Access — Enter Administrative Credentials to Proceed</p>
+      
+      <form id="adminLoginForm" style="text-align: left; display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <label style="font-size: 0.78rem; font-weight: 600; color: #cbd5e1; display: block; margin-bottom: 6px;">
+            <i class="fa-solid fa-envelope"></i> Officer Email
+          </label>
+          <input type="email" id="adminEmailInput" required placeholder="admin@safetour.gov.in" class="form-control" style="width: 100%; background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 0.88rem;">
+        </div>
+
+        <div>
+          <label style="font-size: 0.78rem; font-weight: 600; color: #cbd5e1; display: block; margin-bottom: 6px;">
+            <i class="fa-solid fa-key"></i> Security Pass / Key
+          </label>
+          <input type="password" id="adminPassInput" required placeholder="••••••••••••" class="form-control" style="width: 100%; background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 0.88rem;">
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 4px;">
+          <button type="button" id="btnFillDemoAdminPass" class="btn-secondary" style="flex: 1; padding: 8px; font-size: 0.75rem; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8;">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Fill Demo Pass
+          </button>
+          <a href="/" class="btn-secondary" style="padding: 8px 12px; font-size: 0.75rem; text-decoration: none; display: flex; align-items: center;">
+            <i class="fa-solid fa-arrow-left"></i> Public Portal
+          </a>
+        </div>
+
+        <button type="submit" id="btnSubmitAdminPass" class="btn-primary" style="padding: 12px; font-size: 0.92rem; font-weight: 700; margin-top: 8px; background: linear-gradient(135deg, #0284c7, #0369a1); border: none; border-radius: 8px; color: #fff; cursor: pointer;">
+          <i class="fa-solid fa-lock-open"></i> Authenticate & Unlock Console
+        </button>
+
+        <p id="adminLoginError" style="color: #f87171; font-size: 0.78rem; text-align: center; margin: 4px 0 0 0; display: none;"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Real-Time Toast Notification Banner -->
+  <div id="adminLiveToast" class="live-toast-banner" style="display:none;">
+    <i class="fa-solid fa-bolt toast-icon"></i>
+    <span id="adminToastMsg">Live environmental telemetry synchronized.</span>
+  </div>
+
+  <!-- Admin Navigation -->
+  <header class="glass-nav admin-nav">
+    <div class="nav-container">
+      <div class="brand-logo" onclick="window.location.href='/'">
+        <div class="logo-shield admin-shield">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <div class="logo-text">
+          <span class="brand-title">SafeTour <span class="ai-badge admin-badge">AUTHORITY</span></span>
+          <span class="brand-subtitle">Risk Management & Advisory Broadcast Portal</span>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <span id="adminOfficerBadge" class="badge-tag" style="display: none; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; font-size: 0.75rem;">
+          <i class="fa-solid fa-user-check"></i> <span id="adminOfficerName">Chief Safety Officer</span>
+        </span>
+        <a href="/responder" class="btn-live-sync" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #f87171; text-decoration: none;">
+          <i class="fa-solid fa-truck-medical"></i>
+          <span>Police & Fire EOC</span>
+        </a>
+        <button id="adminBatchSyncBtn" class="btn-live-sync" title="Sync live Open-Meteo weather for all destinations">
+          <i class="fa-solid fa-bolt"></i>
+          <span>Sync All Live Weather</span>
+        </button>
+        <button id="adminLogoutBtn" class="btn-secondary" style="display: none; padding: 6px 12px; font-size: 0.78rem;">
+          <i class="fa-solid fa-right-from-bracket"></i> Lock
+        </button>
+        <a href="/" class="btn-secondary">
+          <i class="fa-solid fa-arrow-left"></i> Public Portal
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-container">
+    <div class="admin-welcome-card">
+      <div class="admin-welcome-text">
+        <h2><i class="fa-solid fa-shield-halved"></i> Safety Management & Incident Moderation</h2>
+        <p>Broadcast official travel alerts, adjust destination risk coefficients based on real-time field reports, and moderate crowd-sourced incidents.</p>
+      </div>
+      <div class="admin-status-tag">
+        <span class="live-dot"></span> System Status: Online & Synchronized with Open-Meteo
+      </div>
+    </div>
+
+    <div class="admin-grid-layout">
+      <!-- Form 1: Broadcast Travel Advisory -->
+      <div class="admin-card">
+        <div class="card-header">
+          <h3><i class="fa-solid fa-bullhorn"></i> Broadcast Official Safety Advisory</h3>
+        </div>
+        <form id="broadcastAdvisoryForm" class="admin-form">
+          <div class="form-group">
+            <label for="advDestination">Target Destination *</label>
+            <select id="advDestination" required class="form-control">
+              <!-- Populated via admin.js -->
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="advAlertLevel">Alert Level *</label>
+              <select id="advAlertLevel" required class="form-control">
+                <option value="Info">Info (Standard Guidance)</option>
+                <option value="Caution" selected>Caution (Heightened Vigilance)</option>
+                <option value="Warning">Warning (Significant Hazard / High Risk)</option>
+                <option value="Emergency">Emergency (Immediate Danger / Avoid Travel)</option>
+              </select>
+            </div>
+            <div class="form-group flex-1">
+              <label for="advIssuer">Issuing Authority *</label>
+              <input type="text" id="advIssuer" value="National Tourism Safety Bureau" required class="form-control">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="advTitle">Advisory Title *</label>
+            <input type="text" id="advTitle" placeholder="e.g. Coastal Monsoon High Tide Red Alert" required class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="advSummary">Advisory Details & Traveler Action Steps *</label>
+            <textarea id="advSummary" rows="3" placeholder="Explain the hazard, affected zones, and exact precautionary measures..." required class="form-control"></textarea>
+          </div>
+
+          <button type="submit" class="btn-primary full-width">
+            <i class="fa-solid fa-tower-broadcast"></i> Issue Public Advisory
+          </button>
+        </form>
+      </div>
+
+      <!-- Form 2: Dynamic Risk Coefficients Adjuster -->
+      <div class="admin-card">
+        <div class="card-header">
+          <h3><i class="fa-solid fa-sliders"></i> Adjust Destination Safety Coefficients</h3>
+        </div>
+        <form id="updateMetricsForm" class="admin-form">
+          <div class="form-group">
+            <label for="metricDestSelect">Select Destination to Calibrate *</label>
+            <select id="metricDestSelect" required class="form-control">
+              <!-- Populated via admin.js -->
+            </select>
+          </div>
+
+          <div class="slider-metric-row">
+            <div class="slider-header">
+              <span>Street & Violent Crime Index (0-100)</span>
+              <strong id="dispCrimeVal">20</strong>
+            </div>
+            <input type="range" id="sliderCrime" min="0" max="100" value="20" class="custom-range">
+          </div>
+
+          <div class="slider-metric-row">
+            <div class="slider-header">
+              <span>Tourist Scam & Overpricing Index (0-100)</span>
+              <strong id="dispScamVal">25</strong>
+            </div>
+            <input type="range" id="sliderScam" min="0" max="100" value="25" class="custom-range">
+          </div>
+
+          <div class="slider-metric-row">
+            <div class="slider-header">
+              <span>Weather / Natural Hazard Severity (0-100)</span>
+              <strong id="dispWeatherVal">15</strong>
+            </div>
+            <input type="range" id="sliderWeather" min="0" max="100" value="15" class="custom-range">
+          </div>
+
+          <div class="slider-metric-row">
+            <div class="slider-header">
+              <span>Nighttime Lighting & Safety Score (0-100)</span>
+              <strong id="dispNightVal">80</strong>
+            </div>
+            <input type="range" id="sliderNight" min="0" max="100" value="80" class="custom-range">
+          </div>
+
+          <button type="submit" class="btn-primary full-width">
+            <i class="fa-solid fa-calculator"></i> Recalculate & Sync Safety Score
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Form 3: Register New Indian Tourist Destination -->
+    <div class="admin-card full-width-card" style="margin-top: 24px; border: 1px solid rgba(16, 185, 129, 0.3); background: rgba(15, 23, 42, 0.88);">
+      <div class="card-header flex-between">
+        <h3><i class="fa-solid fa-map-location-dot" style="color: #10b981;"></i> Add New Indian Tourist Spot (Official Registry)</h3>
+        <span class="hint-text" style="color: #34d399;"><i class="fa-solid fa-shield-check"></i> Integrated with Live Safety Scoring & Operational Timings</span>
+      </div>
+      <form id="createDestinationForm" class="admin-form" style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
+          <div class="form-group">
+            <label for="newDestName"><i class="fa-solid fa-landmark"></i> Destination Name *</label>
+            <input type="text" id="newDestName" placeholder="e.g. Kanyakumari: Vivekananda Rock Memorial & Sunset Point" required class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="newDestState"><i class="fa-solid fa-map-pin"></i> State / UT *</label>
+            <select id="newDestState" required class="form-control">
+              <option value="">Select State or Union Territory</option>
+              <option value="Andhra Pradesh">Andhra Pradesh</option>
+              <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+              <option value="Assam">Assam</option>
+              <option value="Bihar">Bihar</option>
+              <option value="Chhattisgarh">Chhattisgarh</option>
+              <option value="Goa">Goa</option>
+              <option value="Gujarat">Gujarat</option>
+              <option value="Haryana">Haryana</option>
+              <option value="Himachal Pradesh">Himachal Pradesh</option>
+              <option value="Jharkhand">Jharkhand</option>
+              <option value="Karnataka">Karnataka</option>
+              <option value="Kerala">Kerala</option>
+              <option value="Madhya Pradesh">Madhya Pradesh</option>
+              <option value="Maharashtra">Maharashtra</option>
+              <option value="Manipur">Manipur</option>
+              <option value="Meghalaya">Meghalaya</option>
+              <option value="Mizoram">Mizoram</option>
+              <option value="Nagaland">Nagaland</option>
+              <option value="Odisha">Odisha</option>
+              <option value="Punjab">Punjab</option>
+              <option value="Rajasthan">Rajasthan</option>
+              <option value="Sikkim">Sikkim</option>
+              <option value="Tamil Nadu">Tamil Nadu</option>
+              <option value="Telangana">Telangana</option>
+              <option value="Tripura">Tripura</option>
+              <option value="Uttar Pradesh">Uttar Pradesh</option>
+              <option value="Uttarakhand">Uttarakhand</option>
+              <option value="West Bengal">West Bengal</option>
+              <option value="Andaman & Nicobar Islands">Andaman & Nicobar Islands</option>
+              <option value="Chandigarh">Chandigarh</option>
+              <option value="Dadra & Nagar Haveli and Daman & Diu">Dadra & Nagar Haveli and Daman & Diu</option>
+              <option value="Delhi">Delhi</option>
+              <option value="Jammu & Kashmir">Jammu & Kashmir</option>
+              <option value="Ladakh">Ladakh</option>
+              <option value="Lakshadweep">Lakshadweep</option>
+              <option value="Puducherry">Puducherry</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="newDestRegion"><i class="fa-solid fa-compass"></i> Geographical Zone *</label>
+            <select id="newDestRegion" required class="form-control">
+              <option value="South India">South India</option>
+              <option value="North India">North India</option>
+              <option value="West India">West India</option>
+              <option value="East & North-East India">East & North-East India</option>
+              <option value="Central India">Central India</option>
+              <option value="Islands of India">Islands of India</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="newDestCategory"><i class="fa-solid fa-shapes"></i> Tourism Category *</label>
+            <select id="newDestCategory" required class="form-control">
+              <option value="Heritage & Forts">Heritage & Forts</option>
+              <option value="Spiritual & Sacred">Spiritual & Sacred</option>
+              <option value="Mountain & Adventure">Mountain & Adventure</option>
+              <option value="Beach & Coastal">Beach & Coastal</option>
+              <option value="Wildlife & Nature">Wildlife & Nature</option>
+              <option value="Urban & Culture">Urban & Culture</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
+          <div class="form-group">
+            <label for="newDestLat"><i class="fa-solid fa-location-crosshairs"></i> Latitude *</label>
+            <input type="number" step="0.0001" id="newDestLat" placeholder="e.g. 8.0780" required class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="newDestLng"><i class="fa-solid fa-location-crosshairs"></i> Longitude *</label>
+            <input type="number" step="0.0001" id="newDestLng" placeholder="e.g. 77.5550" required class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="newDestImage"><i class="fa-solid fa-image"></i> Destination Image URL</label>
+            <input type="url" id="newDestImage" placeholder="https://images.unsplash.com/..." class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="newDestSeason"><i class="fa-solid fa-calendar-check"></i> Best Time to Visit</label>
+            <input type="text" id="newDestSeason" placeholder="e.g. October to March" value="October to March" class="form-control">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; background: rgba(30, 41, 59, 0.4); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06);">
+          <div class="form-group">
+            <label for="newDestOpening"><i class="fa-solid fa-door-open"></i> Daily Opening (HH:MM)</label>
+            <input type="text" id="newDestOpening" value="06:00" placeholder="06:00" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="newDestClosing"><i class="fa-solid fa-door-closed"></i> Daily Closing (HH:MM)</label>
+            <input type="text" id="newDestClosing" value="18:30" placeholder="18:30" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="newDestWeeklyOff"><i class="fa-solid fa-calendar-xmark"></i> Weekly Off Day</label>
+            <select id="newDestWeeklyOff" class="form-control">
+              <option value="None">None (Open 7 Days)</option>
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+              <option value="Saturday">Saturday</option>
+              <option value="Sunday">Sunday</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="newDestPeakRush"><i class="fa-solid fa-users-line"></i> Peak Rush Hours</label>
+            <input type="text" id="newDestPeakRush" value="10:30 AM - 03:00 PM" placeholder="10:30 AM - 03:00 PM" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="newDestDomesticFee"><i class="fa-solid fa-ticket"></i> Domestic Fee</label>
+            <input type="text" id="newDestDomesticFee" value="Rs 50" placeholder="Rs 50" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="newDestForeignFee"><i class="fa-solid fa-passport"></i> Foreign Fee</label>
+            <input type="text" id="newDestForeignFee" value="Rs 500" placeholder="Rs 500" class="form-control">
+          </div>
+          <div class="form-group" style="grid-column: span 2;">
+            <label for="newDestBookingUrl"><i class="fa-solid fa-arrow-up-right-from-square"></i> Official Booking Portal URL</label>
+            <input type="url" id="newDestBookingUrl" placeholder="https://..." class="form-control">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
+          <div class="form-group">
+            <label for="newDestDesc"><i class="fa-solid fa-align-left"></i> Destination Description & Historical Importance *</label>
+            <textarea id="newDestDesc" rows="3" placeholder="Brief overview of monument, scenic landscape, cultural relevance..." required class="form-control"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="newDestEtiquette"><i class="fa-solid fa-shirt"></i> Cultural Dress Code & Visitor Guidelines</label>
+            <textarea id="newDestEtiquette" rows="3" placeholder="e.g. Modest attire covering shoulders and knees; footwear removal at temple..." class="form-control"></textarea>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; background: rgba(16, 185, 129, 0.08); padding: 12px; border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.2);">
+          <div class="form-group">
+            <label for="newDestPolice"><i class="fa-solid fa-shield-halved"></i> Primary Police Desk / Outpost</label>
+            <input type="text" id="newDestPolice" placeholder="e.g. Kanyakumari Coastal Police" value="Tourist Police Desk" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="newDestPolicePhone"><i class="fa-solid fa-phone"></i> Emergency Contact Phone</label>
+            <input type="text" id="newDestPolicePhone" placeholder="112" value="112" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="newDestCrime"><i class="fa-solid fa-person-falling-burst"></i> Baseline Crime Index (0-100)</label>
+            <input type="number" min="0" max="100" id="newDestCrime" value="18" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="newDestScam"><i class="fa-solid fa-receipt"></i> Baseline Scam Index (0-100)</label>
+            <input type="number" min="0" max="100" id="newDestScam" value="22" class="form-control">
+          </div>
+        </div>
+
+        <button type="submit" id="btnSubmitNewDest" class="btn-primary" style="padding: 12px 24px; font-size: 0.95rem; font-weight: 700; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 8px; color: #fff; cursor: pointer;">
+          <i class="fa-solid fa-circle-plus"></i> Add Tourist Spot to Bharat Safety Network
+        </button>
+      </form>
+    </div>
+
+    <!-- Moderation Table: Reported Incidents -->
+    <div class="admin-card full-width-card">
+      <div class="card-header flex-between">
+        <h3><i class="fa-solid fa-list-check"></i> Incident Moderation Queue</h3>
+        <span class="hint-text">Review reports submitted by travelers and change status</span>
+      </div>
+      <div class="table-responsive">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Destination</th>
+              <th>Category</th>
+              <th>Severity</th>
+              <th>Title</th>
+              <th>Location</th>
+              <th>Upvotes</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminIncidentsTableBody">
+            <!-- Populated via admin.js -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script src="/static/js/admin.js"></script>
+</body>
+</html>

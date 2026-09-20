@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SafeTour Bharat — India Tourist Destination Safety & Ground Pulse System</title>
+  <meta name="description" content="AI-Powered Tourist Destination Safety, Geofenced Ground Pulse MCQ Reviews, and Real-Time Risk Telemetry across India.">
+  
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <!-- App Stylesheets -->
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/map.css">
+  <link rel="stylesheet" href="/static/css/pulse.css">
+</head>
+<body>
+  <!-- Ambient Background Glows -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+
+  <!-- Real-Time Toast Notification Banner -->
+  <div id="liveToastNotification" class="live-toast-banner" style="display:none;">
+    <i class="fa-solid fa-bolt toast-icon"></i>
+    <span id="toastMessage">Live environmental telemetry synchronized.</span>
+  </div>
+
+  <!-- Navigation Bar -->
+  <header class="glass-nav">
+    <div class="nav-container">
+      <div class="brand-logo" onclick="window.location.reload()">
+        <div class="logo-shield">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span class="shield-pulse"></span>
+        </div>
+        <div class="logo-text">
+          <span class="brand-title">SafeTour <span class="ai-badge" style="background: linear-gradient(135deg, #f59e0b, #10b981);">BHARAT</span></span>
+          <span class="brand-subtitle">India Tourist Safety & Ground Pulse Network</span>
+        </div>
+      </div>
+
+      <div class="nav-search-bar">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="destinationSearchInput" placeholder="Search 25+ iconic Indian spots (e.g. Manali, Taj Mahal, Goa, Varanasi, Leh)..." autocomplete="off">
+        <button id="clearSearchBtn" class="clear-btn" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Demo Location Simulator Dropdown & Live Location Trigger -->
+      <div class="simulator-capsule" title="Toggle between your live device/network location or simulated destination hubs">
+        <button id="btnAcquireCurrentGPS" class="btn-gps-current" title="Switch to My Real-Time Location (Device GPS / Network)">
+          <i class="fa-solid fa-location-crosshairs"></i>
+          <span>My Location</span>
+        </button>
+        <select id="locationSimulatorSelect" class="simulator-select">
+          <option value="device_gps">🛰️ My Live Location (GPS / Network)</option>
+          <option value="lakshadweep">📍 Lakshadweep (Agatti Lagoon 0km)</option>
+          <option value="mumbai">📍 Mumbai (Gateway of India)</option>
+          <option value="bengaluru">📍 Bengaluru (MG Road / Cubbon)</option>
+          <option value="delhi">📍 New Delhi (Rashtrapati Bhavan)</option>
+          <option value="taj_mahal">📍 Taj Mahal, Agra (On-Site 0km)</option>
+          <option value="goa_baga">📍 Baga Beach, Goa (On-Site 0km)</option>
+          <option value="kolkata">📍 Kolkata (Victoria Memorial)</option>
+          <option value="chennai">📍 Chennai (Marina Beach)</option>
+          <option value="manali">📍 Mall Road, Manali (On-Site 0km)</option>
+          <option value="varanasi">📍 Varanasi Ghats (On-Site 0km)</option>
+          <option value="leh">📍 Leh Main Bazaar (On-Site 0km)</option>
+          <option value="munnar">📍 Munnar Hills (On-Site 0km)</option>
+          <option value="hampi">📍 Hampi Ruins (On-Site 0km)</option>
+          <option value="shillong">📍 Police Bazar, Shillong (On-Site 0km)</option>
+        </select>
+      </div>
+
+      <div class="nav-actions">
+        <div id="headerUserCapsuleContainer">
+          <!-- Populated by AuthService -->
+        </div>
+
+        <button id="syncAllLiveBtn" class="btn-live-sync" title="Sync real-time Open-Meteo weather telemetry">
+          <i class="fa-solid fa-bolt"></i>
+          <span>Sync Live</span>
+        </button>
+        <button id="triggerSosBtn" class="btn-sos-trigger">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>SOS 112</span>
+        </button>
+        <button id="openReportModalBtn" class="btn-report-hazard">
+          <i class="fa-solid fa-bullhorn"></i>
+          <span>Report Hazard</span>
+        </button>
+        <a href="/responder" class="btn-live-sync btn-eoc-portal" style="background: rgba(239, 68, 68, 0.18); border: 1px solid #ef4444; color: #f87171; text-decoration: none;" title="Secure Portal for Police, Hospitals, Fire & Emergency Response Body">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>Emergency Body EOC</span>
+          <span style="font-size: 0.65rem; background: #ef4444; color: #fff; padding: 1px 4px; border-radius: 3px; margin-left: 2px;"><i class="fa-solid fa-lock"></i></span>
+        </a>
+        <a href="/admin" class="btn-admin-link">
+          <i class="fa-solid fa-gear"></i>
+          <span>Admin</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Live KPI Metrics Bar -->
+  <section class="kpi-banner">
+    <div class="kpi-card">
+      <div class="kpi-icon emerald"><i class="fa-solid fa-monument"></i></div>
+      <div class="kpi-info">
+        <span class="kpi-value" id="kpiTotalDest">--</span>
+        <span class="kpi-label">Indian Destinations</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon cobalt"><i class="fa-solid fa-shield-heart"></i></div>
+      <div class="kpi-info">
+        <span class="kpi-value" id="kpiAvgScore">--</span>
+        <span class="kpi-label">Average Safety Index</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon amber"><i class="fa-solid fa-users-viewfinder"></i></div>
+      <div class="kpi-info">
+        <span class="kpi-value" id="kpiPulseVotes">--</span>
+        <span class="kpi-label">Ground Pulse Votes</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon rose"><i class="fa-solid fa-satellite-dish"></i></div>
+      <div class="kpi-info">
+        <span class="kpi-value" id="kpiActiveIncidents">--</span>
+        <span class="kpi-label">Active Field Alerts</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filter Strip -->
+  <section class="filter-strip">
+    <div class="filter-group">
+      <span class="filter-label"><i class="fa-solid fa-map-location-dot"></i> Region:</span>
+      <button class="filter-chip active" data-filter="region" data-value="All">All India</button>
+      <button class="filter-chip" data-filter="region" data-value="North India">North India</button>
+      <button class="filter-chip" data-filter="region" data-value="South India">South India</button>
+      <button class="filter-chip" data-filter="region" data-value="West India">West India</button>
+      <button class="filter-chip" data-filter="region" data-value="East & North-East India">East & North-East</button>
+    </div>
+
+    <div class="filter-group">
+      <span class="filter-label"><i class="fa-solid fa-filter"></i> Risk Tier:</span>
+      <button class="filter-chip active" data-filter="risk_tier" data-value="All">All Tiers</button>
+      <button class="filter-chip chip-safe" data-filter="risk_tier" data-value="Low Risk (Safe)">
+        <span class="dot safe"></span> Safe Haven (80-100)
+      </button>
+      <button class="filter-chip chip-moderate" data-filter="risk_tier" data-value="Moderate Risk">
+        <span class="dot moderate"></span> Moderate (60-79)
+      </button>
+    </div>
+
+    <div class="filter-group right-align">
+      <span class="filter-label"><i class="fa-solid fa-shapes"></i> Category:</span>
+      <select id="categoryFilterSelect" class="custom-select">
+        <option value="All">All Categories</option>
+        <option value="Heritage & Forts">Heritage & Forts</option>
+        <option value="Spiritual & Sacred">Spiritual & Sacred</option>
+        <option value="Mountain & Adventure">Mountain & Adventure</option>
+        <option value="Beach & Coastal">Beach & Coastal</option>
+        <option value="Wildlife & Nature">Wildlife & Nature</option>
+        <option value="Urban & Culture">Urban & Culture</option>
+      </select>
+    </div>
+  </section>
+
+  <!-- Main Work Area: Geospatial Map + Destination Safety Inspector -->
+  <main class="main-dashboard-grid">
+    <!-- Map Side -->
+    <div class="map-wrapper-card">
+      <div class="map-controls-header">
+        <div class="map-title-box">
+          <i class="fa-solid fa-map-pin"></i>
+          <span>Bharat Real-Time Risk & Proximity Heatmap</span>
+          <span class="live-pulse-badge"><span class="live-dot"></span> LIVE TELEMETRY</span>
+        </div>
+        <div class="map-layer-toggles">
+          <label class="layer-switch">
+            <input type="checkbox" id="toggleHeatCircles" checked>
+            <span class="slider round"></span>
+            <span class="switch-label">Safety Zones</span>
+          </label>
+          <label class="layer-switch">
+            <input type="checkbox" id="toggleIncidents" checked>
+            <span class="slider round"></span>
+            <span class="switch-label">Field Alerts</span>
+          </label>
+          <label class="layer-switch">
+            <input type="checkbox" id="toggleEmergency">
+            <span class="slider round"></span>
+            <span class="switch-label">Police/Hospitals</span>
+          </label>
+          <label class="layer-switch">
+            <input type="checkbox" id="toggleSatelliteView">
+            <span class="slider round"></span>
+            <span class="switch-label">Satellite</span>
+          </label>
+        </div>
+      </div>
+      <div id="safetyMap" class="interactive-leaflet-map"></div>
+      <div class="map-legend">
+        <span class="legend-item"><span class="legend-dot safe"></span> Safe (80+)</span>
+        <span class="legend-item"><span class="legend-dot moderate"></span> Moderate (60-79)</span>
+        <span class="legend-item"><span class="legend-dot caution"></span> High Caution (40-59)</span>
+        <span class="legend-item"><span class="legend-dot critical"></span> Live Incident</span>
+      </div>
+    </div>
+
+    <!-- Inspector / Detail Side -->
+    <div class="inspector-wrapper-card">
+      <!-- Destination Cards List View (Default) -->
+      <div id="destinationsListView" class="destinations-view">
+        <div class="view-header">
+          <div class="view-title-row">
+            <h3 class="destinations-main-title"><i class="fa-solid fa-compass"></i> Iconic Indian Destinations <span class="dest-count-pill">(<span id="destCountBadge">0</span>)</span></h3>
+          </div>
+          <span class="hint-text">Select any spot to view safety ratings, on-site pulse & emergency services</span>
+        </div>
+        <div id="destinationsGrid" class="destinations-scroll-grid">
+          <!-- Dynamic cards injected via app.js -->
+        </div>
+      </div>
+
+      <!-- Destination Deep-Dive Detail View (When a card/marker is selected) -->
+      <div id="destinationDetailView" class="destination-detail-view" style="display: none;">
+        <div class="detail-header-nav">
+          <button id="backToListBtn" class="btn-back">
+            <i class="fa-solid fa-arrow-left"></i> All Spots
+          </button>
+          <div class="detail-top-actions">
+            <button id="btnOpenPulseVoteFromDetail" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.8rem; background: linear-gradient(135deg, #10b981, #059669); border: none;">
+              <i class="fa-solid fa-square-poll-vertical"></i> Ground Pulse Vote
+            </button>
+            <button id="syncCurrentSpotLiveBtn" class="btn-sync-single" title="Sync real-time weather">
+              <i class="fa-solid fa-arrows-rotate"></i> Sync Weather
+            </button>
+            <span id="detailRiskBadge" class="tier-pill">Safe</span>
+          </div>
+        </div>
+
+        <div class="detail-hero-banner">
+          <img id="detailHeroImage" src="" alt="Destination Photo" class="detail-img">
+          <div class="detail-hero-overlay">
+            <h2 id="detailDestName">Destination Name</h2>
+            <p id="detailLocationSub"><i class="fa-solid fa-location-dot"></i> State, Region</p>
+          </div>
+        </div>
+
+        <!-- Active Real-Time Hazard Alert Box (Dynamically shown if incidents present) -->
+        <div id="detailHazardAlertBox" class="hazard-alert-banner" style="display: none;">
+          <div class="hazard-icon-box">
+            <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; font-size: 1.4rem;"></i>
+          </div>
+          <div class="hazard-content" style="flex: 1;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+              <strong id="detailHazardTitle" style="color: #f87171; font-size: 0.92rem;">Hazard Warning</strong>
+              <span id="detailHazardBadge" class="incident-badge critical">CRITICAL ALERT</span>
+            </div>
+            <p id="detailHazardDesc" style="color: #e2e8f0; font-size: 0.82rem; margin: 6px 0 0 0; line-height: 1.4;">Active field telemetry advisory.</p>
+          </div>
+        </div>
+
+        <!-- Live Operations & Timings Matrix -->
+        <div class="operations-card">
+          <div class="operations-header">
+            <span class="operations-title">
+              <i class="fa-solid fa-clock-rotate-left" style="color: #38bdf8;"></i> Daily Operational Telemetry & Timings
+            </span>
+            <span id="detailLiveStatusPill" class="live-status-pill open">
+              <span class="status-dot-pulse"></span>
+              <span id="detailLiveStatusText">OPEN NOW</span>
+            </span>
+          </div>
+
+          <div class="timings-grid">
+            <div class="timing-item">
+              <span class="timing-label"><i class="fa-solid fa-door-open"></i> Operating Hours</span>
+              <span class="timing-val" id="detailOperatingHours">06:00 AM - 06:30 PM</span>
+            </div>
+            <div class="timing-item">
+              <span class="timing-label"><i class="fa-solid fa-calendar-xmark"></i> Weekly Off</span>
+              <span class="timing-val" id="detailWeeklyOff">None (Open Daily)</span>
+            </div>
+            <div class="timing-item">
+              <span class="timing-label"><i class="fa-solid fa-person-walking-dashed-line-arrow-right"></i> Peak Rush Window</span>
+              <span class="timing-val" id="detailPeakRush" style="color: #f59e0b;">10:30 AM - 03:30 PM</span>
+            </div>
+          </div>
+
+          <div class="ticket-booking-strip">
+            <div class="fee-info">
+              <i class="fa-solid fa-ticket"></i> Entry: Domestic <strong id="detailDomesticFee">₹50</strong> | Foreign <strong id="detailForeignFee">₹1100</strong>
+            </div>
+            <a id="detailTicketLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-ticket-portal">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> Official Booking Portal
+            </a>
+          </div>
+        </div>
+
+        <!-- Ground Pulse Field Consensus Card -->
+        <div class="consensus-card">
+          <div class="consensus-header">
+            <span class="consensus-title">
+              <i class="fa-solid fa-users" style="color: #10b981;"></i> Ground Truth Consensus (<span id="consensusVotesCount">0</span> Verified Reviews)
+            </span>
+            <span id="consensusProximityBadge" class="proximity-badge">Calculating Distance...</span>
+          </div>
+          <div class="consensus-grid">
+            <div class="consensus-pill">
+              <span class="consensus-pill-label">Recommendation</span>
+              <span class="consensus-pill-val" id="consensusRecommendPct" style="color: #34d399;">--% Recommend</span>
+            </div>
+            <div class="consensus-pill">
+              <span class="consensus-pill-label">Live Crowd Rush</span>
+              <span class="consensus-pill-val" id="consensusCrowd">Moderate</span>
+            </div>
+            <div class="consensus-pill">
+              <span class="consensus-pill-label">Safety Vibe</span>
+              <span class="consensus-pill-val" id="consensusSafety">Very Safe</span>
+            </div>
+            <div class="consensus-pill">
+              <span class="consensus-pill-label">Ground Weather</span>
+              <span class="consensus-pill-val" id="consensusWeather">Pleasant</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Meteorological Hazard Telemetry Card -->
+        <div class="live-weather-card">
+          <div class="weather-icon-box">
+            <i class="fa-solid fa-cloud-sun weather-dynamic-icon" id="weatherDynamicIcon"></i>
+          </div>
+          <div class="weather-data-box">
+            <div class="weather-temp-row">
+              <span class="weather-temp-num" id="liveTempDisplay">--°C</span>
+              <span class="weather-condition-tag" id="liveConditionDisplay">Checking Live Atmospheric Telemetry...</span>
+            </div>
+            <div class="weather-meta-row">
+              <span><i class="fa-solid fa-wind"></i> Wind: <strong id="liveWindDisplay">-- km/h</strong></span>
+              <span>•</span>
+              <span><i class="fa-solid fa-cloud-showers-heavy"></i> Precip: <strong id="livePrecipDisplay">-- mm</strong></span>
+              <span>•</span>
+              <span class="live-sync-indicator"><i class="fa-solid fa-bolt"></i> Open-Meteo Live</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overall Safety Score Gauge -->
+        <div class="score-gauge-card">
+          <div class="gauge-dial-container">
+            <div class="gauge-ring-bg">
+              <div class="gauge-center">
+                <span class="gauge-number" id="detailScoreNumber">88</span>
+                <span class="gauge-caption">/ 100 Safety Index</span>
+              </div>
+            </div>
+          </div>
+          <div class="gauge-insights">
+            <h4 id="detailVerdictTitle">Optimal Travel Conditions</h4>
+            <p id="detailVerdictText">Low crime rate, high tourist police vigilance, reliable medical units, and robust traveler safety.</p>
+            <div class="best-time-tag">
+              <i class="fa-solid fa-calendar-check"></i> Best Time to Visit: <span id="detailBestTime">Oct - Mar</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Multi-Factor Risk Breakdown -->
+        <div class="risk-metrics-section">
+          <h4><i class="fa-solid fa-chart-simple"></i> Multi-Factor Risk Assessment</h4>
+          <div class="metric-row">
+            <div class="metric-header">
+              <span><i class="fa-solid fa-user-ninja"></i> Street Crime & Pickpocketing</span>
+              <span id="valCrime" class="metric-value">12%</span>
+            </div>
+            <div class="progress-bar-bg"><div id="barCrime" class="progress-bar-fill safe" style="width: 12%;"></div></div>
+          </div>
+
+          <div class="metric-row">
+            <div class="metric-header">
+              <span><i class="fa-solid fa-receipt"></i> Touts & Commercial Scams</span>
+              <span id="valScam" class="metric-value">25%</span>
+            </div>
+            <div class="progress-bar-bg"><div id="barScam" class="progress-bar-fill moderate" style="width: 25%;"></div></div>
+          </div>
+
+          <div class="metric-row">
+            <div class="metric-header">
+              <span><i class="fa-solid fa-cloud-bolt"></i> Weather & Environmental Hazard</span>
+              <span id="valWeather" class="metric-value">18%</span>
+            </div>
+            <div class="progress-bar-bg"><div id="barWeather" class="progress-bar-fill safe" style="width: 18%;"></div></div>
+          </div>
+
+          <div class="metric-row">
+            <div class="metric-header">
+              <span><i class="fa-solid fa-moon"></i> Nighttime Walkability & Lighting</span>
+              <span id="valNight" class="metric-value">88%</span>
+            </div>
+            <div class="progress-bar-bg"><div id="barNight" class="progress-bar-fill safe" style="width: 88%;"></div></div>
+          </div>
+
+          <div class="metric-row">
+            <div class="metric-header">
+              <span><i class="fa-solid fa-people-group"></i> Live Crowd Density</span>
+              <span id="valCrowd" class="metric-value">60%</span>
+            </div>
+            <div class="progress-bar-bg"><div id="barCrowd" class="progress-bar-fill moderate" style="width: 60%;"></div></div>
+          </div>
+        </div>
+
+        <!-- Recent Ground Pulse Feed -->
+        <div class="detail-section">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h4><i class="fa-solid fa-comments"></i> On-Site Traveler Reviews (<span id="detailPulseReviewsCount">0</span>)</h4>
+            <button class="btn btn-sm" id="btnCastPulseInReviews" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.75rem; border-radius: 6px; padding: 4px 8px; cursor: pointer;">
+              <i class="fa-solid fa-plus"></i> Add Review
+            </button>
+          </div>
+          <div id="detailPulseFeedList">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Real-Time Google News & Travel Bulletins Section -->
+        <div class="detail-section">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h4><i class="fa-brands fa-google" style="color:#38bdf8;"></i> Live Google News & Safety Feed</h4>
+            <span class="live-pulse-badge" style="font-size: 9px;"><span class="live-dot"></span> LIVE RSS TELEMETRY</span>
+          </div>
+          <div id="detailGoogleNewsList" class="google-news-container">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+        <!-- Active Advisories Section -->
+        <div class="detail-section">
+          <h4><i class="fa-solid fa-bullhorn"></i> Official State Police & Tourism Advisories</h4>
+          <div id="detailAdvisoriesList" class="advisories-list">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+        <!-- Emergency Contacts Section -->
+        <div class="detail-section">
+          <h4><i class="fa-solid fa-phone-volume"></i> Verified Emergency Stations (Police & Hospitals)</h4>
+          <div id="detailEmergencyList" class="emergency-facilities-grid">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+        <!-- Safety Tips & Checklist -->
+        <div class="detail-section">
+          <h4><i class="fa-solid fa-shield-cat"></i> Authentic Traveler Safety Tips & Scams to Avoid</h4>
+          <ul id="detailTipsList" class="safety-tips-list">
+            <!-- Injected via JS -->
+          </ul>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Live Community Incident Feed Strip -->
+  <section class="incident-ticker-section">
+    <div class="ticker-header">
+      <div class="ticker-title">
+        <span class="live-dot"></span>
+        <span>LIVE BHARAT TRAVELER HAZARD & SITUATION STREAM</span>
+      </div>
+      <button id="refreshIncidentsBtn" class="btn-ticker-refresh"><i class="fa-solid fa-rotate"></i> Refresh</button>
+    </div>
+    <div id="liveIncidentFeed" class="incident-feed-slider">
+      <!-- Injected dynamically -->
+    </div>
+  </section>
+
+  <!-- MODAL: Ground Pulse MCQ Voting -->
+  <div id="groundPulseModal" class="pulse-modal-backdrop">
+    <div class="pulse-modal-container">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+        <div>
+          <span style="font-size: 0.72rem; color: #10b981; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            <i class="fa-solid fa-satellite"></i> On-Site Ground Pulse Telemetry
+          </span>
+          <h2 id="pulseModalDestName" style="font-size: 1.3rem; margin: 2px 0; color: #f8fafc;">Destination Name</h2>
+          <span id="pulseModalDestState" style="font-size: 0.8rem; color: #94a3b8;">State, India</span>
+        </div>
+        <button class="pulse-modal-close" onclick="GroundPulse.closeVoteModal()">&times;</button>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <span id="pulseModalGeofenceBadge" class="proximity-badge in-range">
+          <span class="pulse-dot"></span> On-Site Verified (Within 25km)
+        </span>
+      </div>
+
+      <form id="groundPulseForm" onsubmit="GroundPulse.submitVote(event)">
+        <!-- MCQ 1: Crowd Rush -->
+        <div class="mcq-group">
+          <label class="mcq-title"><i class="fa-solid fa-people-group" style="color:#38bdf8;"></i> 1. What is the current crowd rush?</label>
+          <div class="mcq-options-grid">
+            <label class="mcq-option-card">
+              <input type="radio" name="crowd_rush" value="Peaceful" required>
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">🍃</span>
+                <span class="mcq-option-text">Peaceful / Empty</span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="crowd_rush" value="Moderate" checked>
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">🚶</span>
+                <span class="mcq-option-text">Moderate / Normal</span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="crowd_rush" value="Heavy">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">👥</span>
+                <span class="mcq-option-text">Heavy Crowds</span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="crowd_rush" value="Extreme">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">🚨</span>
+                <span class="mcq-option-text">Extreme Overload</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- MCQ 2: Visit Recommendation -->
+        <div class="mcq-group">
+          <label class="mcq-title"><i class="fa-solid fa-thumbs-up" style="color:#10b981;"></i> 2. Do you recommend visiting right now?</label>
+          <div class="mcq-options-grid">
+            <label class="mcq-option-card">
+              <input type="radio" name="visit_recommendation" value="Recommended" checked required>
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">✅</span>
+                <span class="mcq-option-text">Yes, Must Visit</span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="visit_recommendation" value="Neutral">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">⚖️</span>
+                <span class="mcq-option-text">Visit with Caution</span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="visit_recommendation" value="Avoid">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">⛔</span>
+                <span class="mcq-option-text">Avoid for Now</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- MCQ 3: Safety Vibe -->
+        <div class="mcq-group">
+          <label class="mcq-title"><i class="fa-solid fa-shield-halved" style="color:#f59e0b;"></i> 3. What is the on-ground safety vibe?</label>
+          <div class="mcq-options-grid">
+            <label class="mcq-option-card">
+              <input type="radio" name="safety_vibe" value="Very Safe" checked required>
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">🛡️</span>
+                <span class="mcq-option-text">Very Safe & Secure</span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="safety_vibe" value="Standard Vigilance">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">👀</span>
+                <span class="mcq-option-text">Normal Vigilance</span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="safety_vibe" value="Caution Needed">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">⚠️</span>
+                <span class="mcq-option-text">Heightened Caution</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- MCQ 4: Ground Weather Reality -->
+        <div class="mcq-group">
+          <label class="mcq-title"><i class="fa-solid fa-cloud-sun" style="color:#38bdf8;"></i> 4. Ground weather reality right now?</label>
+          <div class="mcq-options-grid">
+            <label class="mcq-option-card">
+              <input type="radio" name="ground_weather" value="Pleasant" checked required>
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">☀️</span>
+                <span class="mcq-option-text">Clear & Pleasant</span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="ground_weather" value="Raining/Wet">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">🌧️</span>
+                <span class="mcq-option-text">Rain / Waterlogged</span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="ground_weather" value="Heavy Fog">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">🌫️</span>
+                <span class="mcq-option-text">Dense Fog / Low Vis</span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="ground_weather" value="Sweltering Heat">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">🔥</span>
+                <span class="mcq-option-text">Scorching Heat</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Field Intel Comment -->
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="pulseUserComment" style="font-size: 0.82rem; font-weight: 600; color: #cbd5e1; display: block; margin-bottom: 6px;">
+            <i class="fa-solid fa-pen-to-square"></i> Live Field Intel / Tips (Optional)
+          </label>
+          <textarea id="pulseUserComment" name="user_comment" rows="2" placeholder="e.g. Queue times at East Gate are ~15 mins. Guides charge Rs 300. Water stands available." class="form-control" style="background: rgba(30,41,59,0.7); border-color: rgba(255,255,255,0.1); color: #f8fafc;"></textarea>
+        </div>
+
+        <!-- Error & Success alerts -->
+        <div id="pulseSubmitError" class="hidden" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; padding: 10px; border-radius: 8px; font-size: 0.8rem; margin-bottom: 12px;"></div>
+        <div id="pulseSubmitSuccess" class="hidden" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #6ee7b7; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 12px; display: flex; align-items: center; gap: 10px;"></div>
+
+        <button type="submit" id="btnSubmitPulse" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 0.95rem; font-weight: 700; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(16,185,129,0.3);">
+          Cast Verified Ground Pulse Vote (+50 XP)
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: User Auth (Sign In / Register) -->
+  <div id="authModal" class="pulse-modal-backdrop">
+    <div class="pulse-modal-container" style="max-width: 440px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.2rem; color: #f8fafc; margin: 0;"><i class="fa-solid fa-user-shield" style="color:#38bdf8;"></i> SafeTour Bharat Account</h3>
+        <button class="pulse-modal-close" onclick="AuthService.closeAuthModal()">&times;</button>
+      </div>
+
+      <div class="auth-tabs">
+        <button id="tabBtnLogin" class="auth-tab-btn active" onclick="AuthService.switchAuthTab('login')">Sign In</button>
+        <button id="tabBtnRegister" class="auth-tab-btn" onclick="AuthService.switchAuthTab('register')">Create Account</button>
+      </div>
+
+      <!-- Quick Demo Login Helpers -->
+      <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 10px; padding: 10px; margin-bottom: 16px;">
+        <span style="font-size: 0.72rem; color: #38bdf8; font-weight: 700; text-transform: uppercase;">⚡ Quick 1-Click Demo Profiles:</span>
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
+          <button type="button" class="btn btn-sm" onclick="demoLogin('arjun@traveler.in')" style="flex:1; background: rgba(30,41,59,0.9); border: 1px solid rgba(255,255,255,0.1); color: #f8fafc; font-size: 0.72rem; padding: 6px;">
+            Arjun (Master 1150 XP)
+          </button>
+          <button type="button" class="btn btn-sm" onclick="demoLogin('priya@traveler.in')" style="flex:1; background: rgba(30,41,59,0.9); border: 1px solid rgba(255,255,255,0.1); color: #f8fafc; font-size: 0.72rem; padding: 6px;">
+            Priya (Guardian 650 XP)
+          </button>
+        </div>
+      </div>
+
+      <!-- Login Form -->
+      <div id="loginFormContainer">
+        <form onsubmit="handleLoginSubmit(event)">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px;">Email Address</label>
+            <input type="email" id="loginEmail" placeholder="e.g. arjun@traveler.in" required class="form-control" style="background: rgba(30,41,59,0.7); border-color: rgba(255,255,255,0.1); color: #fff;">
+          </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px;">Password</label>
+            <input type="password" id="loginPassword" placeholder="••••••••" required class="form-control" style="background: rgba(30,41,59,0.7); border-color: rgba(255,255,255,0.1); color: #fff;">
+          </div>
+          <div id="loginErrorBox" class="hidden" style="color: #fca5a5; font-size: 0.8rem; margin-bottom: 10px;"></div>
+          <button type="submit" id="btnLoginSubmit" class="btn btn-primary" style="width: 100%; padding: 10px; font-weight: 700;">
+            Sign In to SafeTour
+          </button>
+        </form>
+      </div>
+
+      <!-- Register Form -->
+      <div id="registerFormContainer" class="hidden">
+        <form onsubmit="handleRegisterSubmit(event)">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px;">Full Name *</label>
+            <input type="text" id="regFullName" placeholder="e.g. Rahul Sen" required class="form-control" style="background: rgba(30,41,59,0.7); border-color: rgba(255,255,255,0.1); color: #fff;">
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px;">Email Address *</label>
+            <input type="email" id="regEmail" placeholder="e.g. rahul@traveler.in" required class="form-control" style="background: rgba(30,41,59,0.7); border-color: rgba(255,255,255,0.1); color: #fff;">
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px;">Home City (India)</label>
+            <input type="text" id="regHomeCity" placeholder="e.g. Jaipur, Rajasthan" class="form-control" style="background: rgba(30,41,59,0.7); border-color: rgba(255,255,255,0.1); color: #fff;">
+          </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px;">Create Password (Min 6 chars) *</label>
+            <input type="password" id="regPassword" minlength="6" placeholder="••••••••" required class="form-control" style="background: rgba(30,41,59,0.7); border-color: rgba(255,255,255,0.1); color: #fff;">
+          </div>
+          <div id="registerErrorBox" class="hidden" style="color: #fca5a5; font-size: 0.8rem; margin-bottom: 10px;"></div>
+          <button type="submit" id="btnRegisterSubmit" class="btn btn-primary" style="width: 100%; padding: 10px; font-weight: 700;">
+            Register & Earn 100 XP
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: User Profile & Leaderboard -->
+  <div id="profileModal" class="pulse-modal-backdrop">
+    <div class="pulse-modal-container" style="max-width: 480px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.2rem; color: #f8fafc; margin: 0;"><i class="fa-solid fa-id-badge" style="color:#f59e0b;"></i> Explorer Credentials</h3>
+        <button class="pulse-modal-close" onclick="document.getElementById('profileModal').classList.remove('active')">&times;</button>
+      </div>
+
+      <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 18px; text-align: center; margin-bottom: 18px;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b, #10b981); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #fff; margin: 0 auto 10px; font-weight: 800;">
+          <i class="fa-solid fa-crown"></i>
+        </div>
+        <h3 id="profileUserName" style="margin: 0 0 4px; color: #f8fafc;">User Name</h3>
+        <p id="profileUserEmail" style="margin: 0 0 8px; font-size: 0.82rem; color: #94a3b8;">user@traveler.in</p>
+        <div style="display: flex; justify-content: center; gap: 8px;">
+          <span id="profileUserBadge" class="user-rank-badge" style="background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245, 158, 11, 0.4); padding: 4px 10px; border-radius: 8px; color: #fbbf24; font-size: 0.75rem;">Verified Explorer</span>
+          <span id="profileUserXP" class="user-xp-chip" style="font-size: 0.75rem; padding: 4px 10px;">100 XP</span>
+        </div>
+        <div style="margin-top: 10px; font-size: 0.75rem; color: #94a3b8;">
+          Home City: <strong id="profileUserCity" style="color: #cbd5e1;">India</strong>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button type="button" class="btn btn-secondary" onclick="AuthService.logout(); document.getElementById('profileModal').classList.remove('active');" style="flex:1; border-color: rgba(239, 68, 68, 0.4); color: #f87171;">
+          <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+        </button>
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('profileModal').classList.remove('active');" style="flex:1;">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Report Safety Incident -->
+  <div id="reportIncidentModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <i class="fa-solid fa-triangle-exclamation modal-icon"></i>
+          <div>
+            <h3>Report Safety Hazard / Alert</h3>
+            <p>Your verified report alerts fellow travelers and local authorities across India.</p>
+          </div>
+        </div>
+        <button id="closeReportModalBtn" class="modal-close-btn">&times;</button>
+      </div>
+
+      <form id="incidentReportForm" class="modal-form">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="incidentDestination">Destination *</label>
+            <select id="incidentDestination" required class="form-control">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+          <div class="form-group flex-1">
+            <label for="incidentCategory">Category *</label>
+            <select id="incidentCategory" required class="form-control">
+              <option value="Tourist Scam">Tourist Scam / Overcharging</option>
+              <option value="Theft/Pickpocket">Theft / Pickpocketing</option>
+              <option value="Weather Hazard">Weather Hazard / Landslide / Fog</option>
+              <option value="Road Hazard">Road Blocked / Ghat Hazard</option>
+              <option value="Harassment">Harassment / Unsafe Area</option>
+              <option value="Medical Emergency">Medical Emergency</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="incidentSeverity">Severity Level *</label>
+            <select id="incidentSeverity" required class="form-control">
+              <option value="Low">Low (Informational / Minor inconvenience)</option>
+              <option value="Medium" selected>Medium (Active Caution / Heightened Vigilance)</option>
+              <option value="High">High (Immediate Risk / Avoid Location)</option>
+              <option value="Critical">Critical (Severe Emergency)</option>
+            </select>
+          </div>
+          <div class="form-group flex-1">
+            <label for="incidentLocationName">Specific Landmark / Gate *</label>
+            <input type="text" id="incidentLocationName" placeholder="e.g. Near East Gate or Mall Road Taxi Stand" required class="form-control">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="incidentTitle">Alert Title *</label>
+          <input type="text" id="incidentTitle" placeholder="e.g. Unregistered pony operators demanding double charges" required class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label for="incidentDesc">Detailed Description *</label>
+          <textarea id="incidentDesc" rows="3" placeholder="Provide actionable intel for travelers: what happened, modus operandi, advice on how to avoid..." required class="form-control"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" id="cancelReportBtn" class="btn-secondary">Cancel</button>
+          <button type="submit" id="submitReportBtn" class="btn-primary">
+            <i class="fa-solid fa-paper-plane"></i> Broadcast Alert
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: SOS Emergency Panic Trigger -->
+  <div id="sosPanicModal" class="modal-backdrop sos-backdrop" style="display: none;">
+    <div class="sos-modal-card">
+      <div class="sos-radar-ping">
+        <i class="fa-solid fa-tower-broadcast"></i>
+      </div>
+      <h2 class="sos-title">BHARAT EMERGENCY SOS BEACON</h2>
+      <p class="sos-subtitle">Broadcasting emergency locator coordinates to State Police Control Room (112) & nearest medical response units.</p>
+
+      <div class="sos-timer-box">
+        <span id="sosCountdownNumber" class="countdown-digits">5</span>
+        <span class="countdown-label">Seconds until automatic dispatch</span>
+      </div>
+
+      <div class="sos-coords-box">
+        <i class="fa-solid fa-crosshairs"></i>
+        <span>Telemetry Coordinates: <strong id="sosCoordsDisplay">Acquiring GPS Fix...</strong></span>
+      </div>
+
+      <div class="emergency-quick-dial-strip">
+        <a href="tel:112" class="quick-dial-btn"><i class="fa-solid fa-phone"></i> National Emergency (112)</a>
+        <a href="tel:1364" class="quick-dial-btn tourist"><i class="fa-solid fa-shield"></i> Tourist Helpline (1364)</a>
+      </div>
+
+      <div id="sosNearestFacilities" class="sos-facilities-list">
+        <!-- Injected upon trigger -->
+      </div>
+
+      <div class="sos-actions">
+        <button id="cancelSosBtn" class="btn-sos-cancel">ABORT EMERGENCY (FALSE ALARM)</button>
+        <button id="instantSosConfirmBtn" class="btn-sos-confirm">DISPATCH IMMEDIATELY</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio Chimes for Alerts -->
+  <audio id="alertChime" preload="auto" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+  <audio id="sosSiren" preload="auto" src="https://assets.mixkit.co/active_storage/sfx/995/995-preview.mp3"></audio>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="/static/js/auth_service.js"></script>
+  <script src="/static/js/geolocation_engine.js"></script>
+  <script src="/static/js/ground_pulse.js"></script>
+  <script src="/static/js/risk_calculator.js"></script>
+  <script src="/static/js/map_engine.js"></script>
+  <script src="/static/js/incident_feed.js"></script>
+  <script src="/static/js/sos_hub.js"></script>
+  <script src="/static/js/app.js"></script>
+
+  <!-- Inline Auth Helpers for Form Handling -->
+  <script>
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const pass = document.getElementById('loginPassword').value;
+      const errBox = document.getElementById('loginErrorBox');
+      const btn = document.getElementById('btnLoginSubmit');
+      
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...';
+      errBox.classList.add('hidden');
+      
+      try {
+        await AuthService.login(email, pass);
+        AuthService.closeAuthModal();
+      } catch (err) {
+        errBox.textContent = err.message;
+        errBox.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Sign In to SafeTour';
+      }
+    }
+
+    async function handleRegisterSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('regFullName').value;
+      const email = document.getElementById('regEmail').value;
+      const city = document.getElementById('regHomeCity').value || 'India';
+      const pass = document.getElementById('regPassword').value;
+      const errBox = document.getElementById('registerErrorBox');
+      const btn = document.getElementById('btnRegisterSubmit');
+      
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Registering...';
+      errBox.classList.add('hidden');
+      
+      try {
+        await AuthService.register(name, email, pass, city);
+        AuthService.closeAuthModal();
+      } catch (err) {
+        errBox.textContent = err.message;
+        errBox.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Register & Earn 100 XP';
+      }
+    }
+
+    async function demoLogin(email) {
+      try {
+        await AuthService.login(email, 'Traveler@123');
+        AuthService.closeAuthModal();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+/* Custom Leaflet Map Dark Theme and Radar Styling */
+
+.leaflet-container {
+  background-color: #080c14 !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* Custom Marker Pins */
+.custom-radar-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marker-shield {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  border: 2px solid #fff;
+  z-index: 2;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.marker-shield:hover {
+  transform: scale(1.15);
+}
+
+.marker-shield.safe { background: #10B981; border-color: #6ee7b7; }
+.marker-shield.moderate { background: #F59E0B; border-color: #fde68a; }
+.marker-shield.caution { background: #F97316; border-color: #fed7aa; }
+
+.marker-pulse-ring {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  animation: radar-ping 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+  z-index: 1;
+}
+
+.marker-pulse-ring.safe { border: 2px solid rgba(16, 185, 129, 0.6); }
+.marker-pulse-ring.moderate { border: 2px solid rgba(245, 158, 11, 0.6); }
+.marker-pulse-ring.caution { border: 2px solid rgba(249, 115, 22, 0.6); }
+
+@keyframes radar-ping {
+  0% { transform: scale(0.6); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* Incident marker */
+.incident-marker-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #EF4444;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  border: 2px solid #fee2e2;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+}
+
+/* Facility marker */
+.facility-marker-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  border: 2px solid #ffffff;
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+.facility-marker-icon:hover {
+  transform: scale(1.25);
+  z-index: 1000;
+}
+.facility-marker-icon.police {
+  background: #2563eb !important;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.9) !important;
+}
+.facility-marker-icon.hospital {
+  background: #dc2626 !important;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.9) !important;
+}
+.facility-marker-icon.rescue {
+  background: #d97706 !important;
+  box-shadow: 0 0 12px rgba(217, 119, 6, 0.9) !important;
+}
+
+/* Leaflet Popup Styling */
+.leaflet-popup-content-wrapper {
+  background: #0f172a !important;
+  color: #F8FAFC !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7) !important;
+  padding: 4px !important;
+}
+
+.leaflet-popup-tip {
+  background: #0f172a !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.popup-dest-card {
+  padding: 8px 10px;
+}
+
+.popup-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.popup-title {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: #fff;
+}
+
+.popup-score-pill {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 8px;
+}
+.popup-score-pill.safe { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+.popup-score-pill.moderate { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.popup-score-pill.caution { background: rgba(249, 115, 22, 0.2); color: #f97316; }
+
+.popup-location {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.popup-btn-inspect {
+  width: 100%;
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 6px;
+}
+.popup-btn-inspect:hover {
+  background: #4338ca;
+}
