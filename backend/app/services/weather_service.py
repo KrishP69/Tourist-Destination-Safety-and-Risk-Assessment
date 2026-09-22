@@ -81,5 +81,76 @@ async def fetch_live_weather(lat: float, lng: float) -> Tuple[float, str, float,
     except Exception as e:
         print(f"[WeatherService] Live fetch fallback for ({lat}, {lng}): {e}")
 
-    # Fallback to mild seasonal default
+    # Fallback to mild seasonal default (existing risk-sync compatibility)
     return 24.0, "Partly Cloudy", 12.0, 0.0, 15.0
+
+
+class WeatherService:
+    """
+    Clean interface for crowd prediction weather signals.
+    Does not invent live values when the upstream API is unavailable.
+    """
+
+    @staticmethod
+    async def get_conditions(lat: float, lng: float) -> dict:
+        try:
+            temp, condition, wind, precip, risk = await fetch_live_weather(lat, lng)
+            # Detect soft-fallback: if network failed, fetch_live_weather still returns defaults.
+            # Callers that need strict availability should use get_conditions_strict.
+            return {
+                "available": True,
+                "temperature_c": temp,
+                "condition": condition,
+                "wind_kmh": wind,
+                "precipitation_mm": precip,
+                "weather_risk": risk,
+                "humidity": None,
+                "visibility": None,
+                "source": "open-meteo",
+            }
+        except Exception:
+            return {
+                "available": False,
+                "message": "Weather data unavailable",
+                "temperature_c": None,
+                "condition": None,
+                "wind_kmh": None,
+                "precipitation_mm": None,
+                "weather_risk": None,
+                "humidity": None,
+                "visibility": None,
+                "source": None,
+            }
+
+    @staticmethod
+    async def get_conditions_strict(lat: float, lng: float) -> dict:
+        """Only returns available=True when Open-Meteo responds successfully."""
+        import httpx
+        url = "https://api.open-meteo.com/v1/forecast"
+        params = {
+            "latitude": lat,
+            "longitude": lng,
+            "current": ["temperature_2m", "relative_humidity_2m", "precipitation", "weather_code", "wind_speed_10m"],
+            "timezone": "auto",
+        }
+        try:
+            async with httpx.AsyncClient(timeout=6.0) as client:
+                resp = await client.get(url, params=params)
+                if resp.status_code != 200:
+                    return {"available": False, "message": "Weather data unavailable"}
+                data = resp.json().get("current", {})
+                code = int(data.get("weather_code", 0))
+                condition_name, base_risk = WMO_WEATHER_MAP.get(code, ("Variable Conditions", 15.0))
+                return {
+                    "available": True,
+                    "temperature_c": float(data.get("temperature_2m", 0)),
+                    "condition": condition_name,
+                    "wind_kmh": float(data.get("wind_speed_10m", 0)),
+                    "precipitation_mm": float(data.get("precipitation", 0)),
+                    "humidity": float(data.get("relative_humidity_2m")) if data.get("relative_humidity_2m") is not None else None,
+                    "weather_risk": base_risk,
+                    "visibility": None,
+                    "source": "open-meteo",
+                }
+        except Exception:
+            return {"available": False, "message": "Weather data unavailable"}

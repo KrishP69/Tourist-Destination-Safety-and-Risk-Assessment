@@ -61,6 +61,18 @@ function initSafetyMap() {
     else mapInstance.removeLayer(riskCirclesLayer);
   });
 
+  document.getElementById("toggleCrowdLayer")?.addEventListener("change", (e) => {
+    if (typeof MapEngineCrowd === "undefined") return;
+    MapEngineCrowd.ensureLayers();
+    if (e.target.checked) {
+      if (MapEngineCrowd.heatmapLayer) mapInstance.addLayer(MapEngineCrowd.heatmapLayer);
+      if (MapEngineCrowd.geofenceLayer) mapInstance.addLayer(MapEngineCrowd.geofenceLayer);
+    } else {
+      if (MapEngineCrowd.heatmapLayer) mapInstance.removeLayer(MapEngineCrowd.heatmapLayer);
+      if (MapEngineCrowd.geofenceLayer) mapInstance.removeLayer(MapEngineCrowd.geofenceLayer);
+    }
+  });
+
   document.getElementById("toggleIncidents")?.addEventListener("change", (e) => {
     if (e.target.checked) mapInstance.addLayer(incidentMarkersLayer);
     else mapInstance.removeLayer(incidentMarkersLayer);
@@ -189,6 +201,14 @@ function renderDestinationMapPoints(destinations, onSelectDestination) {
          </span>`
       : '';
 
+    const crowdSnippet = (dest._crowd && dest._crowd.estimated_crowd != null)
+      ? `<div style="font-size:11px;color:#cbd5e1;margin:4px 0;">
+           Estimated crowd: ~${dest._crowd.estimated_crowd}
+           · Occ ${dest._crowd.occupancy_percentage}%
+           · <span style="font-weight:700;">${dest._crowd.crowd_level || ""}</span>
+         </div>`
+      : `<div style="font-size:10px;color:#64748b;margin:4px 0;">Crowd estimate loads when selected</div>`;
+
     const popupHtml = `
       <div class="popup-dest-card">
         <div class="popup-title-row">
@@ -200,9 +220,10 @@ function renderDestinationMapPoints(destinations, onSelectDestination) {
           <span style="font-size: 11px; color: #94a3b8;">${dest.opening_time || '06:00'} - ${dest.closing_time || '18:30'}</span>
         </div>
         <div class="popup-location"><i class="fa-solid fa-location-dot"></i> ${dest.state} ${distLabel}</div>
+        ${crowdSnippet}
         ${hazardBadgeHtml}
         <button class="popup-btn-inspect" onclick="window.selectDestinationById(${dest.id})">
-          <i class="fa-solid fa-magnifying-glass-chart"></i> View Safety & Ground Pulse
+          <i class="fa-solid fa-magnifying-glass-chart"></i> View Safety, Crowd & Tickets
         </button>
       </div>
     `;
@@ -391,3 +412,95 @@ function flyToCoordinates(lat, lng, zoom = 8) {
     });
   }
 }
+
+/** Crowd map helpers — geofence ring + aggregated zone heatmap (never individual people). */
+const MapEngineCrowd = {
+  geofenceLayer: null,
+  heatmapLayer: null,
+  overviewCache: {},
+
+  ensureLayers() {
+    if (!mapInstance) return;
+    if (!this.geofenceLayer) this.geofenceLayer = L.layerGroup().addTo(mapInstance);
+    if (!this.heatmapLayer) this.heatmapLayer = L.layerGroup().addTo(mapInstance);
+  },
+
+  crowdColor(level) {
+    const map = {
+      LOW: "#34d399",
+      MODERATE: "#fbbf24",
+      HIGH: "#fb923c",
+      VERY_HIGH: "#f87171",
+      CRITICAL: "#94a3b8",
+    };
+    return map[level] || "#64748b";
+  },
+
+  async refreshOverview() {
+    try {
+      const res = await fetch("/api/crowd/overview");
+      const data = await res.json();
+      (data.destinations || []).forEach((d) => {
+        this.overviewCache[d.destination_id] = d;
+      });
+      if (typeof allDestinationsData !== "undefined" && allDestinationsData.length) {
+        allDestinationsData.forEach((dest) => {
+          if (this.overviewCache[dest.id]) dest._crowd = this.overviewCache[dest.id];
+        });
+        if (typeof renderDestinationMapPoints === "function") {
+          renderDestinationMapPoints(allDestinationsData, window.selectDestinationById);
+        }
+      }
+    } catch (_) {}
+  },
+
+  updateDestinationCrowd(destId, crowd) {
+    this.overviewCache[destId] = {
+      destination_id: destId,
+      estimated_crowd: crowd.estimated_crowd,
+      occupancy_percentage: crowd.occupancy_percentage,
+      crowd_level: crowd.crowd_level,
+    };
+  },
+
+  showGeofence(dest) {
+    this.ensureLayers();
+    this.geofenceLayer.clearLayers();
+    const radius = Number(dest.geofence_radius_m || 800);
+    const color = this.crowdColor((dest._crowd && dest._crowd.crowd_level) || "MODERATE");
+    L.circle([dest.lat, dest.lng], {
+      radius,
+      color,
+      weight: 2,
+      fillColor: color,
+      fillOpacity: 0.08,
+      dashArray: "6 6",
+    }).addTo(this.geofenceLayer).bindTooltip(`${dest.name} geofence (~${radius}m)`);
+  },
+
+  async loadHeatmap(destId) {
+    this.ensureLayers();
+    this.heatmapLayer.clearLayers();
+    try {
+      const res = await fetch(`/api/crowd/${destId}/heatmap`);
+      const data = await res.json();
+      if (data.insufficient_data) return;
+      (data.cells || []).forEach((cell) => {
+        const color = this.crowdColor(cell.crowd_level);
+        L.circle([cell.lat, cell.lng], {
+          radius: cell.radius_m || 150,
+          color,
+          weight: 1,
+          fillColor: color,
+          fillOpacity: 0.25,
+        })
+          .bindTooltip(
+            `${cell.name}: ~${cell.estimated_crowd} est. (${cell.crowd_level}) — aggregated zone`
+          )
+          .addTo(this.heatmapLayer);
+      });
+    } catch (_) {}
+  },
+};
+
+window.MapEngineCrowd = MapEngineCrowd;

@@ -101,7 +101,9 @@ function initSosHub() {
     }
   };
 
-  triggerBtn?.addEventListener("click", startCountdown);
+  // Exposed for press-and-hold SOS from UxShell (avoids accidental taps)
+  window.__safetourStartSos = startCountdown;
+
   cancelBtn?.addEventListener("click", abortSos);
   confirmBtn?.addEventListener("click", dispatchSosPayload);
 }

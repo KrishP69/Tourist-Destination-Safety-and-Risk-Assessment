@@ -121,6 +121,8 @@ async function initializeAdminConsole() {
   setupAdminForms();
   setupAdminBatchSync();
   setupCreateDestinationForm();
+  setupCrowdAdminPanel();
+  await refreshAdminCrowdPanel();
 }
 
 let destinationsList = [];
@@ -148,6 +150,12 @@ async function loadAdminDestinations() {
     if (metricSelect) {
       metricSelect.innerHTML = optionsHtml;
       if (destinationsList.length > 0) syncSlidersWithDest(destinationsList[0]);
+    }
+    const crowdSelect = document.getElementById("crowdConfigDestSelect");
+    if (crowdSelect) {
+      crowdSelect.innerHTML = optionsHtml;
+      crowdSelect.onchange = () => fillCrowdConfigForm(parseInt(crowdSelect.value, 10));
+      if (destinationsList.length > 0) fillCrowdConfigForm(destinationsList[0].id);
     }
   } catch (err) {
     console.error("Failed to load destinations in admin:", err);
@@ -384,5 +392,133 @@ function setupCreateDestinationForm() {
         submitBtn.innerHTML = `<i class="fa-solid fa-circle-plus"></i> Add Tourist Spot to Bharat Safety Network`;
       }
     }
+  });
+}
+
+let adminCrowdCache = [];
+
+async function refreshAdminCrowdPanel() {
+  const list = document.getElementById("adminCrowdLiveList");
+  const badge = document.getElementById("adminDemoModeBadge");
+  try {
+    const res = await fetch("/api/admin/crowd", { headers: getAdminHeaders() });
+    if (!res.ok) throw new Error("Failed to load crowd overview");
+    const data = await res.json();
+    adminCrowdCache = data.destinations || [];
+    if (badge) {
+      badge.textContent = data.demo_mode ? "DEMO DATA ON" : "DEMO OFF";
+      badge.classList.toggle("visible", !!data.demo_mode);
+      badge.style.display = "inline-flex";
+    }
+    if (list) {
+      list.innerHTML = adminCrowdCache
+        .slice(0, 20)
+        .map((d) => {
+          const live = d.live || {};
+          const est = live.estimated_crowd != null ? `~${live.estimated_crowd}` : "n/a";
+          return `<div style="padding:6px 0;border-bottom:1px solid rgba(148,163,184,0.12);">
+            <strong>${d.name}</strong> — Est ${est} · Obs ${live.observed_users ?? 0} ·
+            Cap ${d.maximum_capacity} · ${live.crowd_level || "—"} · Conf ${live.confidence ?? "—"}%
+            ${live.is_demo_data ? ' <span style="color:#fbbf24;">[DEMO]</span>' : ""}
+          </div>`;
+        })
+        .join("");
+    }
+    const sel = document.getElementById("crowdConfigDestSelect");
+    if (sel && sel.value) fillCrowdConfigForm(parseInt(sel.value, 10));
+  } catch (err) {
+    if (list) list.innerHTML = `<span style="color:#f87171;">${err.message}</span>`;
+  }
+}
+
+function fillCrowdConfigForm(destId) {
+  const row = adminCrowdCache.find((d) => d.id === destId);
+  const fallback = destinationsList.find((d) => d.id === destId) || {};
+  const src = row || fallback;
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val ?? "";
+  };
+  set("crowdMaxCapacity", src.maximum_capacity ?? 1000);
+  set("crowdComfortCapacity", src.comfortable_capacity ?? 600);
+  set("crowdEmergencyCap", src.emergency_capacity_override ?? "");
+  set("crowdGeofenceRadius", src.geofence_radius_m ?? 800);
+  set("crowdAreaSqm", src.area_sq_meters ?? "");
+  set("crowdThreshLow", src.threshold_low_max ?? 60);
+  set("crowdThreshMod", src.threshold_moderate_max ?? 75);
+  set("crowdThreshHigh", src.threshold_high_max ?? 90);
+  set("crowdThreshVH", src.threshold_very_high_max ?? 100);
+}
+
+function setupCrowdAdminPanel() {
+  document.getElementById("btnEnableDemoMode")?.addEventListener("click", async () => {
+    const res = await fetch("/api/admin/demo-mode", {
+      method: "POST",
+      headers: getAdminHeaders(),
+      body: JSON.stringify({ enabled: true, bootstrap_history: true }),
+    });
+    const data = await res.json();
+    if (!res.ok) return alert(data.detail || "Failed");
+    showAdminToast("DEMO MODE enabled — data is labeled DEMO DATA");
+    await refreshAdminCrowdPanel();
+  });
+
+  document.getElementById("btnDisableDemoMode")?.addEventListener("click", async () => {
+    const res = await fetch("/api/admin/demo-mode", {
+      method: "POST",
+      headers: getAdminHeaders(),
+      body: JSON.stringify({ enabled: false }),
+    });
+    if (!res.ok) return alert("Failed to disable demo mode");
+    showAdminToast("DEMO MODE disabled");
+    await refreshAdminCrowdPanel();
+  });
+
+  document.getElementById("btnRunDemoTick")?.addEventListener("click", async () => {
+    const res = await fetch("/api/admin/demo-tick", { method: "POST", headers: getAdminHeaders() });
+    const data = await res.json();
+    if (!res.ok) return alert(data.detail || "Demo tick failed");
+    showAdminToast(`Demo tick updated ${data.updated || 0} destinations`);
+    await refreshAdminCrowdPanel();
+  });
+
+  document.getElementById("btnRefreshAdminCrowd")?.addEventListener("click", () => refreshAdminCrowdPanel());
+
+  document.getElementById("btnSaveCrowdConfig")?.addEventListener("click", async () => {
+    const destId = parseInt(document.getElementById("crowdConfigDestSelect").value, 10);
+    const emergencyRaw = document.getElementById("crowdEmergencyCap").value;
+    const payload = {
+      maximum_capacity: parseInt(document.getElementById("crowdMaxCapacity").value, 10),
+      comfortable_capacity: parseInt(document.getElementById("crowdComfortCapacity").value, 10),
+      geofence_radius_m: parseFloat(document.getElementById("crowdGeofenceRadius").value),
+      area_sq_meters: parseFloat(document.getElementById("crowdAreaSqm").value) || null,
+      threshold_low_max: parseFloat(document.getElementById("crowdThreshLow").value),
+      threshold_moderate_max: parseFloat(document.getElementById("crowdThreshMod").value),
+      threshold_high_max: parseFloat(document.getElementById("crowdThreshHigh").value),
+      threshold_very_high_max: parseFloat(document.getElementById("crowdThreshVH").value),
+    };
+    if (emergencyRaw !== "") payload.emergency_capacity_override = parseInt(emergencyRaw, 10);
+    else payload.emergency_capacity_override = null;
+
+    const res = await fetch(`/api/admin/destinations/${destId}/crowd-config`, {
+      method: "PUT",
+      headers: getAdminHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) return alert(data.detail || "Save failed");
+    showAdminToast("Crowd configuration saved");
+    await refreshAdminCrowdPanel();
+  });
+
+  document.getElementById("btnEnsureTodaySlots")?.addEventListener("click", async () => {
+    const destId = parseInt(document.getElementById("crowdConfigDestSelect").value, 10);
+    const res = await fetch(`/api/admin/destinations/${destId}/ensure-slots`, {
+      method: "POST",
+      headers: getAdminHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) return alert(data.detail || "Failed");
+    showAdminToast(`Ensured ${data.slots} slots for ${data.date}`);
   });
 }

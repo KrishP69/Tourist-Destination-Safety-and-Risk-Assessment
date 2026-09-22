@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/crowd.css">
 </head>
 <body class="admin-body">
   <div class="ambient-glow glow-1"></div>
@@ -203,6 +204,70 @@
           </button>
         </form>
       </div>
+    </div>
+
+    <!-- Crowd Intelligence Admin -->
+    <div class="admin-card full-width-card admin-crowd-panel" style="margin-top: 24px;">
+      <div class="card-header flex-between">
+        <h3><i class="fa-solid fa-people-group" style="color:#38bdf8;"></i> Crowd Capacity, Geofence & Demo Mode</h3>
+        <span id="adminDemoModeBadge" class="crowd-demo-banner">DEMO OFF</span>
+      </div>
+      <p style="font-size:0.78rem;color:#94a3b8;margin:0 0 12px 0;">
+        Adjust capacity and thresholds. Estimates never claim GPS headcounts. Demo mode generates labeled DEMO DATA only.
+      </p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <button type="button" class="btn-crowd-primary" id="btnEnableDemoMode">Enable DEMO MODE + bootstrap history</button>
+        <button type="button" class="btn-crowd-ghost" id="btnDisableDemoMode">Disable DEMO MODE</button>
+        <button type="button" class="btn-crowd-secondary" id="btnRunDemoTick">Run demo tick</button>
+        <button type="button" class="btn-crowd-ghost" id="btnRefreshAdminCrowd">Refresh live estimates</button>
+      </div>
+      <div class="admin-crowd-grid">
+        <div>
+          <label>Destination</label>
+          <select id="crowdConfigDestSelect"></select>
+        </div>
+        <div>
+          <label>Maximum capacity</label>
+          <input type="number" id="crowdMaxCapacity" min="10">
+        </div>
+        <div>
+          <label>Comfortable capacity</label>
+          <input type="number" id="crowdComfortCapacity" min="10">
+        </div>
+        <div>
+          <label>Emergency capacity override</label>
+          <input type="number" id="crowdEmergencyCap" min="0" placeholder="blank = none">
+        </div>
+        <div>
+          <label>Geofence radius (m)</label>
+          <input type="number" id="crowdGeofenceRadius" min="50">
+        </div>
+        <div>
+          <label>Area (sq meters)</label>
+          <input type="number" id="crowdAreaSqm" min="1">
+        </div>
+        <div>
+          <label>LOW max %</label>
+          <input type="number" id="crowdThreshLow" min="0" max="100">
+        </div>
+        <div>
+          <label>MODERATE max %</label>
+          <input type="number" id="crowdThreshMod" min="0" max="100">
+        </div>
+        <div>
+          <label>HIGH max %</label>
+          <input type="number" id="crowdThreshHigh" min="0" max="100">
+        </div>
+        <div>
+          <label>VERY HIGH max %</label>
+          <input type="number" id="crowdThreshVH" min="0" max="200">
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button type="button" class="btn-crowd-primary" id="btnSaveCrowdConfig">Save crowd config</button>
+        <button type="button" class="btn-crowd-secondary" id="btnEnsureTodaySlots">Ensure today’s ticket slots</button>
+      </div>
+      <div id="adminCrowdLiveList" style="margin-top:14px;font-size:0.78rem;color:#cbd5e1;max-height:240px;overflow:auto;"></div>
     </div>
 
     <!-- Form 3: Register New Indian Tourist Destination -->
