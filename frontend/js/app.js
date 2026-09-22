@@ -13,12 +13,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Initialize Core Subsystems
   AuthService.renderHeaderUser();
   GeolocationEngine.init();
+  if (window.LocationPresence) LocationPresence.init();
   initSafetyMap();
   initSosHub();
 
   await loadOverviewKPIs();
   await fetchAndRenderDestinations();
   await loadIncidentFeed();
+  if (typeof MapEngineCrowd !== "undefined") {
+    MapEngineCrowd.refreshOverview();
+  }
 
   setupFilterEvents();
   setupSearchEvents();
@@ -193,6 +197,16 @@ window.selectDestinationById = async function(destId) {
     
     // Automatically fetch real-time consensus & reviews
     await refreshDestinationConsensus(destId);
+
+    // Crowd intelligence + smart booking + best time
+    if (window.CrowdDashboard) CrowdDashboard.startPolling(destId);
+    if (window.SmartBooking) SmartBooking.initForDestination(destId);
+    if (window.BestTime) BestTime.load(destId);
+    if (typeof MapEngineCrowd !== "undefined") {
+      MapEngineCrowd.showGeofence(dest);
+      MapEngineCrowd.loadHeatmap(destId);
+    }
+    if (window.LiveStatus) LiveStatus.markFresh();
 
     // Trigger live atmospheric sync in the background
     syncSingleSpotLive(destId, false);

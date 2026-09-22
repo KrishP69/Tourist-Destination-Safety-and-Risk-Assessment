@@ -210,3 +210,180 @@ def init_db():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_incidents_dest ON incidents(destination_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_emergency_dest ON emergency_contacts(destination_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_dispatches_incident ON emergency_dispatches(incident_id)")
+
+        # --- Crowd Intelligence schema (additive, non-destructive) ---
+        _migrate_destination_crowd_columns(cursor)
+        _create_crowd_tables(cursor)
+
+
+def _table_columns(cursor, table_name: str) -> set:
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    return {row[1] for row in cursor.fetchall()}
+
+
+def _add_column_if_missing(cursor, table: str, column: str, ddl: str):
+    cols = _table_columns(cursor, table)
+    if column not in cols:
+        cursor.execute(f"ALTER TABLE {table} ADD COLUMN {ddl}")
+
+
+def _migrate_destination_crowd_columns(cursor):
+    """Add capacity / geofence fields to existing destinations without destroying data."""
+    migrations = [
+        ("maximum_capacity", "maximum_capacity INTEGER NOT NULL DEFAULT 1000"),
+        ("comfortable_capacity", "comfortable_capacity INTEGER NOT NULL DEFAULT 600"),
+        ("area_sq_meters", "area_sq_meters REAL DEFAULT NULL"),
+        ("geofence_radius_m", "geofence_radius_m REAL NOT NULL DEFAULT 800"),
+        ("geofence_polygon", "geofence_polygon TEXT DEFAULT NULL"),
+        ("crowd_status", "crowd_status TEXT NOT NULL DEFAULT 'active'"),
+        ("threshold_low_max", "threshold_low_max REAL NOT NULL DEFAULT 60"),
+        ("threshold_moderate_max", "threshold_moderate_max REAL NOT NULL DEFAULT 75"),
+        ("threshold_high_max", "threshold_high_max REAL NOT NULL DEFAULT 90"),
+        ("threshold_very_high_max", "threshold_very_high_max REAL NOT NULL DEFAULT 100"),
+        ("emergency_capacity_override", "emergency_capacity_override INTEGER DEFAULT NULL"),
+        ("crowd_weight_gps", "crowd_weight_gps REAL DEFAULT NULL"),
+        ("crowd_weight_bookings", "crowd_weight_bookings REAL DEFAULT NULL"),
+        ("crowd_weight_historical", "crowd_weight_historical REAL DEFAULT NULL"),
+        ("crowd_weight_trend", "crowd_weight_trend REAL DEFAULT NULL"),
+    ]
+    for col, ddl in migrations:
+        _add_column_if_missing(cursor, "destinations", col, ddl)
+
+
+def _create_crowd_tables(cursor):
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS destination_zones (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        destination_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        zone_type TEXT DEFAULT 'general',
+        capacity INTEGER NOT NULL DEFAULT 200,
+        area_sq_meters REAL DEFAULT NULL,
+        center_lat REAL,
+        center_lng REAL,
+        radius_m REAL DEFAULT 150,
+        polygon_json TEXT DEFAULT NULL,
+        status TEXT NOT NULL DEFAULT 'active',
+        FOREIGN KEY (destination_id) REFERENCES destinations (id) ON DELETE CASCADE
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS visitor_presence (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        anonymous_user_id TEXT NOT NULL,
+        destination_id INTEGER NOT NULL,
+        zone_id INTEGER DEFAULT NULL,
+        last_seen TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        entered_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        exited_at TIMESTAMP DEFAULT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        accuracy_m REAL DEFAULT NULL,
+        source TEXT DEFAULT 'gps',
+        FOREIGN KEY (destination_id) REFERENCES destinations (id) ON DELETE CASCADE,
+        FOREIGN KEY (zone_id) REFERENCES destination_zones (id) ON DELETE SET NULL,
+        UNIQUE(anonymous_user_id, destination_id)
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ticket_slots (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        destination_id INTEGER NOT NULL,
+        slot_date TEXT NOT NULL,
+        start_time TEXT NOT NULL,
+        end_time TEXT NOT NULL,
+        capacity INTEGER NOT NULL,
+        booked_count INTEGER NOT NULL DEFAULT 0,
+        reserved_count INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'open',
+        FOREIGN KEY (destination_id) REFERENCES destinations (id) ON DELETE CASCADE,
+        UNIQUE(destination_id, slot_date, start_time, end_time)
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ticket_bookings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        booking_reference TEXT UNIQUE NOT NULL,
+        user_id INTEGER,
+        anonymous_user_id TEXT,
+        destination_id INTEGER NOT NULL,
+        slot_id INTEGER NOT NULL,
+        number_of_people INTEGER NOT NULL CHECK(number_of_people > 0),
+        booking_status TEXT NOT NULL DEFAULT 'confirmed',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        cancelled_at TIMESTAMP DEFAULT NULL,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL,
+        FOREIGN KEY (destination_id) REFERENCES destinations (id) ON DELETE CASCADE,
+        FOREIGN KEY (slot_id) REFERENCES ticket_slots (id) ON DELETE CASCADE
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS crowd_snapshots (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        destination_id INTEGER NOT NULL,
+        captured_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        day_of_week INTEGER,
+        hour INTEGER,
+        observed_users INTEGER NOT NULL DEFAULT 0,
+        booked_visitors INTEGER NOT NULL DEFAULT 0,
+        estimated_crowd INTEGER NOT NULL DEFAULT 0,
+        capacity INTEGER NOT NULL DEFAULT 0,
+        occupancy_percentage REAL NOT NULL DEFAULT 0,
+        density REAL DEFAULT NULL,
+        crowd_level TEXT NOT NULL DEFAULT 'LOW',
+        confidence REAL NOT NULL DEFAULT 0,
+        weather_condition TEXT DEFAULT NULL,
+        is_demo INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY (destination_id) REFERENCES destinations (id) ON DELETE CASCADE
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS crowd_predictions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        destination_id INTEGER NOT NULL,
+        slot_id INTEGER DEFAULT NULL,
+        prediction_for TIMESTAMP NOT NULL,
+        predicted_crowd INTEGER NOT NULL,
+        predicted_occupancy REAL NOT NULL,
+        crowd_level TEXT NOT NULL DEFAULT 'LOW',
+        confidence REAL NOT NULL DEFAULT 0,
+        model_version TEXT NOT NULL DEFAULT 'v1-statistical',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (destination_id) REFERENCES destinations (id) ON DELETE CASCADE,
+        FOREIGN KEY (slot_id) REFERENCES ticket_slots (id) ON DELETE SET NULL
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS crowd_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        destination_id INTEGER NOT NULL,
+        event_name TEXT NOT NULL,
+        event_date TEXT NOT NULL,
+        crowd_multiplier REAL NOT NULL DEFAULT 1.2,
+        notes TEXT,
+        FOREIGN KEY (destination_id) REFERENCES destinations (id) ON DELETE CASCADE
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS app_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+    )
+    """)
+
+    # Crowd-related indexes
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_presence_dest_active ON visitor_presence(destination_id, is_active)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_presence_anon ON visitor_presence(anonymous_user_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_presence_last_seen ON visitor_presence(last_seen)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_slots_dest_date ON ticket_slots(destination_id, slot_date)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_bookings_slot_status ON ticket_bookings(slot_id, booking_status)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_bookings_dest ON ticket_bookings(destination_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_snapshots_dest_time ON crowd_snapshots(destination_id, captured_at)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_predictions_dest ON crowd_predictions(destination_id, prediction_for)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_zones_dest ON destination_zones(destination_id)")

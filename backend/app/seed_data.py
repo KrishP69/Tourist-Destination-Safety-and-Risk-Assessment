@@ -1603,5 +1603,14 @@ def seed_database(force_refresh: bool = False):
 
         print("[SafeTour Bharat] Database synchronized with all-India destinations, real-time operational timings, and live hazard incidents.")
 
+        # Crowd intelligence defaults (capacity, zones) — additive, never deletes destinations
+        try:
+            from app.services.demo_crowd_service import seed_destination_crowd_defaults
+            seed_destination_crowd_defaults(cursor)
+            conn.commit()
+            print("[SafeTour Bharat] Crowd capacity / zone defaults synchronized.")
+        except Exception as e:
+            print(f"[SafeTour Bharat] Crowd defaults note: {e}")
+
 if __name__ == "__main__":
     seed_database(force_refresh=True)

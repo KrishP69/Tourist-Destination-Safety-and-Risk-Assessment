@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SafeTour Bharat — India Tourist Destination Safety & Ground Pulse System</title>
-  <meta name="description" content="AI-Powered Tourist Destination Safety, Geofenced Ground Pulse MCQ Reviews, and Real-Time Risk Telemetry across India.">
+  <title>SafeTour Bharat — India Tourist Safety & Crowd Intelligence Network</title>
+  <meta name="description" content="SafeTour Bharat — destination safety, Best Time to Visit, crowd intelligence, and smart ticket booking across India.">
   
   <!-- Google Fonts & FontAwesome -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,6 +19,8 @@
   <link rel="stylesheet" href="/static/css/style.css">
   <link rel="stylesheet" href="/static/css/map.css">
   <link rel="stylesheet" href="/static/css/pulse.css">
+  <link rel="stylesheet" href="/static/css/crowd.css">
+  <link rel="stylesheet" href="/static/css/ux.css">
 </head>
 <body>
   <!-- Ambient Background Glows -->
@@ -34,78 +36,100 @@
 
   <!-- Navigation Bar -->
   <header class="glass-nav">
-    <div class="nav-container">
-      <div class="brand-logo" onclick="window.location.reload()">
+    <div class="nav-container ux-nav">
+      <div class="brand-logo" onclick="window.location.reload()" role="button" tabindex="0" aria-label="SafeTour Bharat home">
         <div class="logo-shield">
-          <i class="fa-solid fa-shield-halved"></i>
+          <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
           <span class="shield-pulse"></span>
         </div>
         <div class="logo-text">
           <span class="brand-title">SafeTour <span class="ai-badge" style="background: linear-gradient(135deg, #f59e0b, #10b981);">BHARAT</span></span>
-          <span class="brand-subtitle">India Tourist Safety & Ground Pulse Network</span>
+          <span class="brand-subtitle ux-sub">India Tourist Safety &amp; Crowd Intelligence Network</span>
         </div>
       </div>
 
-      <div class="nav-search-bar">
-        <i class="fa-solid fa-magnifying-glass search-icon"></i>
-        <input type="text" id="destinationSearchInput" placeholder="Search 25+ iconic Indian spots (e.g. Manali, Taj Mahal, Goa, Varanasi, Leh)..." autocomplete="off">
-        <button id="clearSearchBtn" class="clear-btn" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-
-      <!-- Demo Location Simulator Dropdown & Live Location Trigger -->
-      <div class="simulator-capsule" title="Toggle between your live device/network location or simulated destination hubs">
-        <button id="btnAcquireCurrentGPS" class="btn-gps-current" title="Switch to My Real-Time Location (Device GPS / Network)">
-          <i class="fa-solid fa-location-crosshairs"></i>
-          <span>My Location</span>
-        </button>
-        <select id="locationSimulatorSelect" class="simulator-select">
-          <option value="device_gps">🛰️ My Live Location (GPS / Network)</option>
-          <option value="lakshadweep">📍 Lakshadweep (Agatti Lagoon 0km)</option>
-          <option value="mumbai">📍 Mumbai (Gateway of India)</option>
-          <option value="bengaluru">📍 Bengaluru (MG Road / Cubbon)</option>
-          <option value="delhi">📍 New Delhi (Rashtrapati Bhavan)</option>
-          <option value="taj_mahal">📍 Taj Mahal, Agra (On-Site 0km)</option>
-          <option value="goa_baga">📍 Baga Beach, Goa (On-Site 0km)</option>
-          <option value="kolkata">📍 Kolkata (Victoria Memorial)</option>
-          <option value="chennai">📍 Chennai (Marina Beach)</option>
-          <option value="manali">📍 Mall Road, Manali (On-Site 0km)</option>
-          <option value="varanasi">📍 Varanasi Ghats (On-Site 0km)</option>
-          <option value="leh">📍 Leh Main Bazaar (On-Site 0km)</option>
-          <option value="munnar">📍 Munnar Hills (On-Site 0km)</option>
-          <option value="hampi">📍 Hampi Ruins (On-Site 0km)</option>
-          <option value="shillong">📍 Police Bazar, Shillong (On-Site 0km)</option>
-        </select>
-      </div>
-
-      <div class="nav-actions">
-        <div id="headerUserCapsuleContainer">
-          <!-- Populated by AuthService -->
+      <div class="nav-center">
+        <div class="nav-search-bar">
+          <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+          <input type="text" id="destinationSearchInput" placeholder="Search destinations…" autocomplete="off" aria-label="Search destination">
+          <button id="clearSearchBtn" class="clear-btn" style="display:none;" aria-label="Clear search"><i class="fa-solid fa-xmark"></i></button>
         </div>
+        <button id="btnAcquireCurrentGPS" class="nav-btn secondary" type="button" title="Enable or use your location" aria-label="My Location">
+          <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+          <span id="myLocationLabel">My Location</span>
+        </button>
+      </div>
 
-        <button id="syncAllLiveBtn" class="btn-live-sync" title="Sync real-time Open-Meteo weather telemetry">
-          <i class="fa-solid fa-bolt"></i>
-          <span>Sync Live</span>
+      <div class="nav-right">
+        <button type="button" id="liveStatusChip" class="live-chip hide-mobile" title="Live data status" aria-label="Live data status">
+          <span>● LIVE</span>
+          <span class="live-sub" id="liveStatusSub">Checking…</span>
         </button>
-        <button id="triggerSosBtn" class="btn-sos-trigger">
-          <i class="fa-solid fa-triangle-exclamation"></i>
-          <span>SOS 112</span>
+        <button type="button" id="btnMyTickets" class="nav-btn primary-ticket hide-mobile" aria-label="My Tickets">
+          <i class="fa-solid fa-ticket" aria-hidden="true"></i>
+          <span>My Tickets</span>
         </button>
-        <button id="openReportModalBtn" class="btn-report-hazard">
-          <i class="fa-solid fa-bullhorn"></i>
-          <span>Report Hazard</span>
+        <button type="button" id="triggerSosBtn" class="nav-btn sos-btn hide-mobile" title="Press and hold to open SOS" aria-label="SOS emergency — press and hold">
+          <i class="fa-solid fa-bell" aria-hidden="true"></i>
+          <span>SOS</span>
         </button>
-        <a href="/responder" class="btn-live-sync btn-eoc-portal" style="background: rgba(239, 68, 68, 0.18); border: 1px solid #ef4444; color: #f87171; text-decoration: none;" title="Secure Portal for Police, Hospitals, Fire & Emergency Response Body">
-          <i class="fa-solid fa-shield-halved"></i>
-          <span>Emergency Body EOC</span>
-          <span style="font-size: 0.65rem; background: #ef4444; color: #fff; padding: 1px 4px; border-radius: 3px; margin-left: 2px;"><i class="fa-solid fa-lock"></i></span>
-        </a>
-        <a href="/admin" class="btn-admin-link">
-          <i class="fa-solid fa-gear"></i>
-          <span>Admin</span>
-        </a>
+        <div id="headerUserCapsuleContainer" class="hide-mobile"></div>
+        <div class="nav-more-wrap hide-mobile">
+          <button type="button" id="btnNavMore" class="nav-btn secondary" aria-haspopup="true" aria-expanded="false" aria-label="More actions">
+            <i class="fa-solid fa-ellipsis" aria-hidden="true"></i>
+            <span>More</span>
+          </button>
+          <div id="navMoreMenu" class="nav-more-menu" role="menu">
+            <button type="button" id="openReportModalBtn" role="menuitem"><i class="fa-solid fa-triangle-exclamation"></i> Report Hazard</button>
+            <button type="button" id="syncAllLiveBtn" role="menuitem"><i class="fa-solid fa-arrows-rotate"></i> Sync weather</button>
+            <a href="/responder" role="menuitem"><i class="fa-solid fa-shield-halved"></i> Emergency EOC</a>
+            <a href="/admin" id="navAdminLink" role="menuitem" style="display:none;"><i class="fa-solid fa-gear"></i> Admin</a>
+            <div style="padding:8px 12px;border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;">
+              <label style="font-size:0.68rem;color:#94a3b8;display:block;margin-bottom:4px;">Location simulator</label>
+              <select id="locationSimulatorSelect" class="simulator-select" style="width:100%;" aria-label="Location simulator">
+                <option value="device_gps">My Live Location</option>
+                <option value="lakshadweep">Lakshadweep</option>
+                <option value="mumbai">Mumbai</option>
+                <option value="bengaluru">Bengaluru</option>
+                <option value="delhi">New Delhi</option>
+                <option value="taj_mahal">Taj Mahal</option>
+                <option value="goa_baga">Baga Beach</option>
+                <option value="kolkata">Kolkata</option>
+                <option value="chennai">Chennai</option>
+                <option value="manali">Manali</option>
+                <option value="varanasi">Varanasi</option>
+                <option value="leh">Leh</option>
+                <option value="munnar">Munnar</option>
+                <option value="hampi">Hampi</option>
+                <option value="shillong">Shillong</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <button type="button" id="btnMobileMenu" class="btn-nav-mobile" aria-label="Open menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
       </div>
     </div>
+    <div class="mobile-search-bar">
+      <div class="nav-search-bar" id="mobileSearchCloneHost"></div>
+    </div>
   </header>
+
+  <!-- Mobile drawer -->
+  <div id="mobileDrawer" class="mobile-drawer" aria-hidden="true">
+    <div class="mobile-drawer-panel" role="dialog" aria-label="Menu">
+      <button type="button" id="btnCloseMobileMenu" class="nav-btn" style="justify-content:space-between;">Close <i class="fa-solid fa-xmark"></i></button>
+      <button type="button" class="nav-btn" id="mobileBtnLocation"><i class="fa-solid fa-location-dot"></i> My Location</button>
+      <button type="button" class="nav-btn primary-ticket" id="mobileBtnTickets"><i class="fa-solid fa-ticket"></i> My Tickets</button>
+      <button type="button" class="nav-btn sos-btn" id="mobileBtnSos"><i class="fa-solid fa-bell"></i> SOS (press &amp; hold)</button>
+      <button type="button" class="nav-btn" id="mobileBtnLive"><i class="fa-solid fa-circle"></i> Live status</button>
+      <button type="button" class="nav-btn" id="mobileBtnReport"><i class="fa-solid fa-triangle-exclamation"></i> Report Hazard</button>
+      <a href="/responder" class="nav-btn"><i class="fa-solid fa-shield-halved"></i> Emergency EOC</a>
+      <a href="/admin" class="nav-btn" id="mobileAdminLink" style="display:none;"><i class="fa-solid fa-gear"></i> Admin</a>
+      <div id="mobileAuthHost"></div>
+    </div>
+  </div>
 
   <!-- Live KPI Metrics Bar -->
   <section class="kpi-banner">
@@ -182,24 +206,28 @@
       <div class="map-controls-header">
         <div class="map-title-box">
           <i class="fa-solid fa-map-pin"></i>
-          <span>Bharat Real-Time Risk & Proximity Heatmap</span>
-          <span class="live-pulse-badge"><span class="live-dot"></span> LIVE TELEMETRY</span>
+          <span>Crowd &amp; Safety Map</span>
         </div>
-        <div class="map-layer-toggles">
+        <div class="map-layer-toggles ux-layers">
+          <label class="layer-switch">
+            <input type="checkbox" id="toggleCrowdLayer" checked>
+            <span class="slider round"></span>
+            <span class="switch-label">Crowd</span>
+          </label>
           <label class="layer-switch">
             <input type="checkbox" id="toggleHeatCircles" checked>
             <span class="slider round"></span>
-            <span class="switch-label">Safety Zones</span>
+            <span class="switch-label">Safety</span>
           </label>
           <label class="layer-switch">
             <input type="checkbox" id="toggleIncidents" checked>
             <span class="slider round"></span>
-            <span class="switch-label">Field Alerts</span>
+            <span class="switch-label">Hazards</span>
           </label>
           <label class="layer-switch">
             <input type="checkbox" id="toggleEmergency">
             <span class="slider round"></span>
-            <span class="switch-label">Police/Hospitals</span>
+            <span class="switch-label">Hospitals / Police</span>
           </label>
           <label class="layer-switch">
             <input type="checkbox" id="toggleSatelliteView">
@@ -210,10 +238,10 @@
       </div>
       <div id="safetyMap" class="interactive-leaflet-map"></div>
       <div class="map-legend">
-        <span class="legend-item"><span class="legend-dot safe"></span> Safe (80+)</span>
-        <span class="legend-item"><span class="legend-dot moderate"></span> Moderate (60-79)</span>
-        <span class="legend-item"><span class="legend-dot caution"></span> High Caution (40-59)</span>
-        <span class="legend-item"><span class="legend-dot critical"></span> Live Incident</span>
+        <span class="legend-item"><span class="legend-dot safe"></span> Low crowd / Safe</span>
+        <span class="legend-item"><span class="legend-dot moderate"></span> Moderate</span>
+        <span class="legend-item"><span class="legend-dot caution"></span> High</span>
+        <span class="legend-item"><span class="legend-dot critical"></span> Very High / Incident</span>
       </div>
     </div>
 
@@ -239,25 +267,63 @@
             <i class="fa-solid fa-arrow-left"></i> All Spots
           </button>
           <div class="detail-top-actions">
-            <button id="btnOpenPulseVoteFromDetail" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.8rem; background: linear-gradient(135deg, #10b981, #059669); border: none;">
-              <i class="fa-solid fa-square-poll-vertical"></i> Ground Pulse Vote
+            <button id="btnOpenPulseVoteFromDetail" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.8rem; background: #059669; border: none;">
+              <i class="fa-solid fa-square-poll-vertical"></i> Ground Pulse
             </button>
             <button id="syncCurrentSpotLiveBtn" class="btn-sync-single" title="Sync real-time weather">
-              <i class="fa-solid fa-arrows-rotate"></i> Sync Weather
+              <i class="fa-solid fa-arrows-rotate"></i> Weather
             </button>
             <span id="detailRiskBadge" class="tier-pill">Safe</span>
           </div>
         </div>
 
-        <div class="detail-hero-banner">
-          <img id="detailHeroImage" src="" alt="Destination Photo" class="detail-img">
-          <div class="detail-hero-overlay">
-            <h2 id="detailDestName">Destination Name</h2>
-            <p id="detailLocationSub"><i class="fa-solid fa-location-dot"></i> State, Region</p>
+        <!-- Premium destination hero -->
+        <div class="dest-hero-card">
+          <div class="dest-hero-media">
+            <img id="detailHeroImage" src="" alt="Destination photo">
+            <div class="dest-hero-copy">
+              <h2 id="detailDestName">Destination Name</h2>
+              <div class="dest-hero-meta">
+                <span id="detailLocationSub"><i class="fa-solid fa-location-dot"></i> State, Region</span>
+                <span class="status-chip live" id="detailLiveChip">● LIVE</span>
+                <span class="status-chip safe" id="detailSafetyChip">SAFE</span>
+                <span class="status-chip crowd" id="detailCrowdChip">CROWD —</span>
+              </div>
+            </div>
+          </div>
+          <div class="hero-metrics">
+            <div class="hero-metric">
+              <span>Estimated crowd</span>
+              <strong id="heroEstimatedCrowd">—</strong>
+              <em>Not an exact headcount</em>
+            </div>
+            <div class="hero-metric">
+              <span>Occupancy</span>
+              <strong id="heroOccupancy">—</strong>
+              <em>vs capacity</em>
+            </div>
+            <div class="hero-metric">
+              <span>Next 1 hour</span>
+              <strong id="heroNextHour">—</strong>
+              <em>Predicted</em>
+            </div>
+            <div class="hero-metric">
+              <span>Tickets available</span>
+              <strong id="heroTicketsAvail">—</strong>
+              <em>Today’s open slots</em>
+            </div>
           </div>
         </div>
 
-        <!-- Active Real-Time Hazard Alert Box (Dynamically shown if incidents present) -->
+        <!-- Hidden legacy hero fields kept for JS compatibility -->
+        <div class="detail-hero-banner" style="display:none;" aria-hidden="true">
+          <div class="detail-hero-overlay">
+            <h2>legacy</h2>
+            <p>legacy</p>
+          </div>
+        </div>
+
+        <!-- Active Real-Time Hazard Alert Box -->
         <div id="detailHazardAlertBox" class="hazard-alert-banner" style="display: none;">
           <div class="hazard-icon-box">
             <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; font-size: 1.4rem;"></i>
@@ -271,18 +337,114 @@
           </div>
         </div>
 
-        <!-- Live Operations & Timings Matrix -->
+        <!-- BEST TIME TO VISIT -->
+        <div class="best-time-card" id="bestTimeCard">
+          <div class="best-time-header">
+            <div>
+              <h3>✨ Best Time to Visit</h3>
+              <p>Based on current crowd + bookings + historical patterns</p>
+            </div>
+            <button type="button" class="btn-find-best" id="btnFindBestTime">✨ Find Best Time</button>
+          </div>
+          <div id="bestTimeOptions" class="best-options">
+            <div style="font-size:0.78rem;color:#94a3b8;">Select a destination date below, then find recommended lower-crowd slots.</div>
+          </div>
+          <p class="crowd-disclaimer" id="bestTimeConfidence" style="margin-top:8px;"></p>
+        </div>
+
+        <!-- Location consent -->
+        <div id="locationConsentBanner" class="location-consent-banner">
+          <div style="flex:1;">
+            <strong style="color:#e2e8f0;font-size:0.85rem;">Enable Location Access</strong>
+            <p id="locationConsentPurpose">Your location helps us estimate crowd levels and provide real-time safety information around tourist destinations.</p>
+            <p style="margin-top:6px;font-size:0.68rem;color:#64748b;">We only check whether you are inside a destination geofence. Precise movement history is not stored.</p>
+          </div>
+          <div class="location-consent-actions">
+            <button type="button" id="btnEnableLocationCrowd" class="btn-crowd-primary">Allow</button>
+            <button type="button" id="btnDeclineLocationCrowd" class="btn-crowd-ghost">Not now</button>
+          </div>
+        </div>
+
+        <!-- Crowd Forecast -->
+        <div class="forecast-card" id="crowdForecastCard">
+          <div class="crowd-intel-header">
+            <span class="crowd-intel-title">Crowd Forecast</span>
+            <span style="font-size:0.68rem;color:#94a3b8;">Green = estimate now · Blue dashed = predicted</span>
+          </div>
+          <div id="forecastChart" class="forecast-chart"></div>
+          <div class="crowd-meta-row">
+            <span>Peak expected around: <strong id="forecastPeak">—</strong></span>
+            <span>Trend: <strong id="forecastTrend">—</strong></span>
+          </div>
+        </div>
+
+        <!-- Live Crowd Intelligence -->
+        <div id="crowdIntelCard" class="crowd-intel-card">
+          <div class="crowd-intel-header">
+            <span class="crowd-intel-title">Live Crowd Intelligence</span>
+            <span id="crowdDemoBanner" class="crowd-demo-banner"><i class="fa-solid fa-flask"></i> DEMO MODE</span>
+            <span id="locationPresenceStatus" class="location-status-chip">Location off</span>
+          </div>
+          <div id="crowdLoadingState" style="display:none;font-size:0.75rem;color:#94a3b8;margin-bottom:6px;">
+            <i class="fa-solid fa-spinner fa-spin"></i> Refreshing crowd estimate…
+          </div>
+          <div class="crowd-metrics-grid">
+            <div class="crowd-metric">
+              <span class="crowd-metric-label">Estimated crowd</span>
+              <span class="crowd-metric-value" id="crowdEstimated">—</span>
+              <div class="crowd-metric-hint">Weighted estimate</div>
+            </div>
+            <div class="crowd-metric">
+              <span class="crowd-metric-label">Observed users</span>
+              <span class="crowd-metric-value" id="crowdObserved">—</span>
+              <div class="crowd-metric-hint">Opted-in GPS in geofence</div>
+            </div>
+            <div class="crowd-metric">
+              <span class="crowd-metric-label">Booked visitors</span>
+              <span class="crowd-metric-value" id="crowdBooked">—</span>
+              <div class="crowd-metric-hint">Ticket signal</div>
+            </div>
+            <div class="crowd-metric">
+              <span class="crowd-metric-label">Occupancy</span>
+              <span class="crowd-metric-value" id="crowdOccupancy">—</span>
+              <div class="crowd-metric-hint">Capacity <span id="crowdCapacity">—</span></div>
+            </div>
+          </div>
+          <div class="crowd-meta-row">
+            <span id="crowdLevelPill" class="crowd-level-pill UNKNOWN">—</span>
+            <span>Trend: <strong id="crowdTrend">—</strong></span>
+            <span>Density: <strong id="crowdDensity">—</strong></span>
+            <span>Next 1h: <strong id="crowdPredicted">—</strong></span>
+            <span>Confidence: <strong id="crowdConfidence">—</strong></span>
+            <span>Updated: <strong id="crowdUpdated">—</strong></span>
+          </div>
+          <p class="crowd-disclaimer">
+            Estimated is never an exact GPS headcount. Observed = opted-in users inside the geofence.
+          </p>
+        </div>
+
+        <!-- Crowd Insight -->
+        <div class="insight-card" id="crowdInsightCard">
+          <span class="crowd-intel-title">Crowd Insight</span>
+          <p class="muted" id="insightQuestion" style="margin:6px 0 0;font-size:0.78rem;color:#94a3b8;">What is shaping today’s crowd?</p>
+          <ul class="insight-list" id="insightReasons"></ul>
+          <div class="crowd-meta-row">
+            <span>Expected peak: <strong id="insightPeak">—</strong></span>
+            <span>Confidence: <strong id="insightConfidence">—</strong></span>
+          </div>
+        </div>
+
+        <!-- Operations / fees -->
         <div class="operations-card">
           <div class="operations-header">
             <span class="operations-title">
-              <i class="fa-solid fa-clock-rotate-left" style="color: #38bdf8;"></i> Daily Operational Telemetry & Timings
+              <i class="fa-solid fa-clock" style="color: #38bdf8;"></i> Hours &amp; entry
             </span>
             <span id="detailLiveStatusPill" class="live-status-pill open">
               <span class="status-dot-pulse"></span>
               <span id="detailLiveStatusText">OPEN NOW</span>
             </span>
           </div>
-
           <div class="timings-grid">
             <div class="timing-item">
               <span class="timing-label"><i class="fa-solid fa-door-open"></i> Operating Hours</span>
@@ -293,19 +455,43 @@
               <span class="timing-val" id="detailWeeklyOff">None (Open Daily)</span>
             </div>
             <div class="timing-item">
-              <span class="timing-label"><i class="fa-solid fa-person-walking-dashed-line-arrow-right"></i> Peak Rush Window</span>
+              <span class="timing-label"><i class="fa-solid fa-person-walking"></i> Peak Rush</span>
               <span class="timing-val" id="detailPeakRush" style="color: #f59e0b;">10:30 AM - 03:30 PM</span>
             </div>
           </div>
-
           <div class="ticket-booking-strip">
             <div class="fee-info">
               <i class="fa-solid fa-ticket"></i> Entry: Domestic <strong id="detailDomesticFee">₹50</strong> | Foreign <strong id="detailForeignFee">₹1100</strong>
             </div>
             <a id="detailTicketLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-ticket-portal">
-              <i class="fa-solid fa-arrow-up-right-from-square"></i> Official Booking Portal
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> Official Portal
             </a>
           </div>
+        </div>
+
+        <!-- Smart Entry Slots -->
+        <div class="smart-booking-card" id="smartBookingCard">
+          <div class="smart-booking-header">
+            <span class="crowd-intel-title">🎟 Smart Entry Slots</span>
+            <button type="button" class="btn-crowd-secondary" id="btnFindBestTimeAlt" onclick="BestTime.openModal()">
+              ✨ Find Best Time
+            </button>
+          </div>
+          <div class="booking-date-row">
+            <label style="font-size:0.72rem;color:#94a3b8;">Date
+              <input type="date" id="bookingSlotDate" onchange="SmartBooking.loadSlots(); BestTime.load();">
+            </label>
+            <label style="font-size:0.72rem;color:#94a3b8;">Visitors
+              <input type="number" id="bookingPeopleCount" min="1" max="50" value="2">
+            </label>
+            <button type="button" class="btn-crowd-ghost" onclick="SmartBooking.loadSlots()">Refresh</button>
+          </div>
+          <p style="font-size:0.68rem;color:#64748b;margin:0 0 8px 0;">
+            Predicted visitors are estimates. Server validates capacity before confirming.
+          </p>
+          <div id="slotListContainer" class="slot-list"></div>
+          <div id="bookingConfirmBox" class="booking-confirm-box"></div>
+          <div id="bookingErrorBox" class="booking-error-box"></div>
         </div>
 
         <!-- Ground Pulse Field Consensus Card -->
@@ -828,6 +1014,64 @@
   </div>
 
   <!-- MODAL: SOS Emergency Panic Trigger -->
+  <!-- Best Time / Tickets / Live / Booking confirmation modals -->
+  <div id="bestTimeModal" class="ux-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="bestTimeModalTitle">
+    <div class="ux-modal">
+      <h3 id="bestTimeModalTitle">✨ Best Time to Visit</h3>
+      <p class="muted">Recommended based on current data — lower predicted crowd</p>
+      <div id="bestTimeModalBody"></div>
+      <div class="ux-modal-actions">
+        <button type="button" class="btn-crowd-ghost" onclick="BestTime.closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="myTicketsModal" class="ux-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="myTicketsTitle">
+    <div class="ux-modal">
+      <h3 id="myTicketsTitle">🎟 My Tickets</h3>
+      <p class="muted">Upcoming, completed, and cancelled bookings</p>
+      <div class="ticket-tabs">
+        <button type="button" class="active" data-tab="upcoming">Upcoming</button>
+        <button type="button" data-tab="completed">Completed</button>
+        <button type="button" data-tab="cancelled">Cancelled</button>
+      </div>
+      <div id="myTicketsList"></div>
+      <div class="ux-modal-actions">
+        <button type="button" class="btn-crowd-ghost" onclick="MyTickets.close()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="liveDataModal" class="ux-modal-backdrop" role="dialog" aria-modal="true">
+    <div class="ux-modal">
+      <h3>Live data sources</h3>
+      <p class="muted" id="liveDataUpdated">Last updated —</p>
+      <ul class="insight-list" id="liveDataSourcesList">
+        <li>✓ Crowd presence</li>
+        <li>✓ Ticket bookings</li>
+        <li>✓ Crowd prediction</li>
+        <li>✓ Safety reports</li>
+        <li>✓ Weather</li>
+      </ul>
+      <div class="ux-modal-actions">
+        <button type="button" class="btn-crowd-primary" id="btnLiveSyncFromModal">Sync weather now</button>
+        <button type="button" class="btn-crowd-ghost" onclick="LiveStatus.close()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="bookingConfirmModal" class="ux-modal-backdrop" role="dialog" aria-modal="true">
+    <div class="ux-modal">
+      <h3>🎟 Booking confirmed</h3>
+      <div class="confirm-card" id="bookingConfirmDetails"></div>
+      <div class="ux-modal-actions">
+        <button type="button" class="btn-crowd-primary" onclick="MyTickets.open()">View ticket</button>
+        <a id="bookingCalendarLink" class="btn-crowd-secondary" href="#" target="_blank" rel="noopener">Add to calendar</a>
+        <button type="button" class="btn-crowd-ghost" onclick="document.getElementById('bookingConfirmModal').classList.remove('open')">Close</button>
+      </div>
+    </div>
+  </div>
+
   <div id="sosPanicModal" class="modal-backdrop sos-backdrop" style="display: none;">
     <div class="sos-modal-card">
       <div class="sos-radar-ping">
@@ -870,6 +1114,11 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="/static/js/auth_service.js"></script>
   <script src="/static/js/geolocation_engine.js"></script>
+  <script src="/static/js/location_presence.js"></script>
+  <script src="/static/js/crowd_dashboard.js"></script>
+  <script src="/static/js/smart_booking.js"></script>
+  <script src="/static/js/best_time.js"></script>
+  <script src="/static/js/ux_shell.js"></script>
   <script src="/static/js/ground_pulse.js"></script>
   <script src="/static/js/risk_calculator.js"></script>
   <script src="/static/js/map_engine.js"></script>
