@@ -103,6 +103,14 @@ const GeolocationEngine = {
       };
       this.notifyLocationChange();
       this.updateSelectDropdownValue('device_gps');
+      // Resolve a short readable place name for the header
+      this.resolvePlaceName(pos.coords.latitude, pos.coords.longitude).then((place) => {
+        if (place) {
+          this.currentPosition.locationName = place;
+          this.currentPosition.shortName = this.toShortPlaceName(place);
+          this.notifyLocationChange();
+        }
+      });
       if (notifyUser && typeof window.showLiveToast === 'function') {
         window.showLiveToast(`📍 Device GPS Locked: (${this.currentPosition.lat.toFixed(3)}, ${this.currentPosition.lng.toFixed(3)})`);
       }
@@ -184,22 +192,112 @@ const GeolocationEngine = {
   },
 
   notifyLocationChange() {
+    if (this.currentPosition && !this.currentPosition.shortName) {
+      this.currentPosition.shortName = this.toShortPlaceName(this.currentPosition.locationName);
+    }
     window.dispatchEvent(new CustomEvent('locationUpdated', {
       detail: { ...this.currentPosition }
     }));
   },
 
-  calculateDistanceKm(targetLat, targetLng) {
+  /** Short label for header, e.g. "Mumbai, MH" / "Agra" */
+  toShortPlaceName(name) {
+    if (!name) return '—';
+    let s = String(name)
+      .replace(/\s*\(.*?\)\s*/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    // Prefer "City, State" when present
+    if (s.includes(',')) {
+      const parts = s.split(',').map((p) => p.trim()).filter(Boolean);
+      if (parts.length >= 2) {
+        const city = parts[0];
+        let region = parts[1]
+          .replace(/\bMaharashtra\b/i, 'MH')
+          .replace(/\bKarnataka\b/i, 'KA')
+          .replace(/\bTamil Nadu\b/i, 'TN')
+          .replace(/\bWest Bengal\b/i, 'WB')
+          .replace(/\bUttar Pradesh\b/i, 'UP')
+          .replace(/\bMadhya Pradesh\b/i, 'MP')
+          .replace(/\bAndhra Pradesh\b/i, 'AP')
+          .replace(/\bHimachal Pradesh\b/i, 'HP')
+          .replace(/\bJammu (&|and) Kashmir\b/i, 'J&K')
+          .replace(/\bNational Capital Territory of Delhi\b/i, 'Delhi')
+          .replace(/\bNCT\b/i, 'Delhi');
+        // Keep region short
+        if (region.length > 12) region = region.slice(0, 10) + '…';
+        s = `${city}, ${region}`;
+      }
+    }
+    if (s.length > 22) s = s.slice(0, 20) + '…';
+    return s || '—';
+  },
+
+  async resolvePlaceName(lat, lng) {
+    // 1) Nearest known preset (fast, offline)
+    let best = null;
+    let bestKm = Infinity;
+    for (const key of Object.keys(this.SIMULATED_PRESETS)) {
+      const p = this.SIMULATED_PRESETS[key];
+      const km = this._haversineKm(lat, lng, p.lat, p.lng);
+      if (km < bestKm) {
+        bestKm = km;
+        best = p.name;
+      }
+    }
+    if (best && bestKm <= 35) {
+      return this.toShortPlaceName(best);
+    }
+
+    // 2) OpenStreetMap Nominatim reverse geocode
+    try {
+      const url =
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}` +
+        `&lon=${encodeURIComponent(lng)}&zoom=12&addressdetails=1`;
+      const res = await fetch(url, {
+        headers: { Accept: 'application/json' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const a = data.address || {};
+        const city =
+          a.city || a.town || a.village || a.suburb || a.county || a.state_district;
+        const state = a.state || a.region || '';
+        if (city && state) return this.toShortPlaceName(`${city}, ${state}`);
+        if (city) return this.toShortPlaceName(city);
+        if (data.display_name) {
+          const first = String(data.display_name).split(',').slice(0, 2).join(',');
+          return this.toShortPlaceName(first);
+        }
+      }
+    } catch (e) {
+      console.warn('Reverse geocode failed', e);
+    }
+
+    // 3) Coordinate fallback
+    return `${lat.toFixed(2)}°N, ${Math.abs(lng).toFixed(2)}°E`;
+  },
+
+  _haversineKm(lat1, lon1, lat2, lon2) {
     const R = 6371.0;
-    const dlat = (targetLat - this.currentPosition.lat) * (Math.PI / 180.0);
-    const dlon = (targetLng - this.currentPosition.lng) * (Math.PI / 180.0);
+    const dlat = (lat2 - lat1) * (Math.PI / 180.0);
+    const dlon = (lon2 - lon1) * (Math.PI / 180.0);
     const a =
       Math.sin(dlat / 2.0) * Math.sin(dlat / 2.0) +
-      Math.cos(this.currentPosition.lat * (Math.PI / 180.0)) *
-      Math.cos(targetLat * (Math.PI / 180.0)) *
-      Math.sin(dlon / 2.0) * Math.sin(dlon / 2.0);
-    const c = 2.0 * Math.atan2(Math.sqrt(a), Math.sqrt(1.0 - a));
-    return Math.round(R * c * 10) / 10;
+      Math.cos(lat1 * (Math.PI / 180.0)) *
+        Math.cos(lat2 * (Math.PI / 180.0)) *
+        Math.sin(dlon / 2.0) *
+        Math.sin(dlon / 2.0);
+    return R * 2.0 * Math.atan2(Math.sqrt(a), Math.sqrt(1.0 - a));
+  },
+
+  calculateDistanceKm(targetLat, targetLng) {
+    return Math.round(this._haversineKm(
+      this.currentPosition.lat,
+      this.currentPosition.lng,
+      targetLat,
+      targetLng
+    ) * 10) / 10;
   },
 
   isWithinGeofence(targetLat, targetLng, thresholdKm = 25.0) {

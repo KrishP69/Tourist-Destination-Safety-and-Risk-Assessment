@@ -4,7 +4,6 @@ let sosCountdownTimer = null;
 let countdownRemaining = 5;
 
 function initSosHub() {
-  const triggerBtn = document.getElementById("triggerSosBtn");
   const modal = document.getElementById("sosPanicModal");
   const cancelBtn = document.getElementById("cancelSosBtn");
   const confirmBtn = document.getElementById("instantSosConfirmBtn");

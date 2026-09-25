@@ -1,0 +1,162 @@
+/* Live Risk Intelligence — compact dashboard + map legend */
+.live-risk-card {
+  background: #151e2e;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin: 0;
+}
+.live-risk-card h4 {
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.live-risk-card .live-risk-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.live-risk-card button {
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.7);
+  color: #cbd5e1;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.live-risk-card button:hover {
+  border-color: rgba(14, 165, 233, 0.4);
+  color: #7dd3fc;
+}
+.live-risk-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+.lr-pill {
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #cbd5e1;
+}
+.lr-pill.critical { border-color: rgba(239, 68, 68, 0.45); color: #fca5a5; }
+.lr-pill.high { border-color: rgba(249, 115, 22, 0.45); color: #fdba74; }
+.lr-pill.moderate { border-color: rgba(245, 158, 11, 0.45); color: #fcd34d; }
+.lr-pill.low { border-color: rgba(16, 185, 129, 0.45); color: #6ee7b7; }
+.live-risk-note,
+.live-risk-empty {
+  font-size: 0.72rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+#liveRiskUpdated {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+.live-risk-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0;
+}
+.live-risk-filters button {
+  font-size: 0.65rem;
+  padding: 4px 8px;
+}
+.live-risk-filters button.active {
+  background: rgba(14, 165, 233, 0.18);
+  border-color: rgba(14, 165, 233, 0.4);
+  color: #7dd3fc;
+}
+#liveRiskEventList {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow: auto;
+}
+.live-risk-item {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  cursor: pointer;
+}
+.live-risk-item strong {
+  display: block;
+  font-size: 0.76rem;
+  color: #f1f5f9;
+}
+.live-risk-item span {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  text-transform: capitalize;
+}
+.lr-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+#liveRiskNearbyBanner {
+  margin: 10px 14px 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  background: rgba(249, 115, 22, 0.08);
+  color: #fed7aa;
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+#liveRiskNearbyBanner .muted {
+  display: block;
+  margin-top: 4px;
+  color: #94a3b8;
+  font-size: 0.68rem;
+}
+.live-risk-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 0.68rem;
+  color: #94a3b8;
+}
+.live-risk-legend .legend-dot.risk-low { background: #10b981; }
+.live-risk-legend .legend-dot.risk-mod { background: #f59e0b; }
+.live-risk-legend .legend-dot.risk-high { background: #f97316; }
+.live-risk-legend .legend-dot.risk-crit { background: #ef4444; }
+.lr-badge {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.lr-badge.official {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+.lr-badge.news {
+  background: rgba(56, 189, 248, 0.12);
+  color: #7dd3fc;
+}

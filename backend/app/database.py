@@ -214,6 +214,8 @@ def init_db():
         # --- Crowd Intelligence schema (additive, non-destructive) ---
         _migrate_destination_crowd_columns(cursor)
         _create_crowd_tables(cursor)
+        # --- Live Disaster / Risk Intelligence (additive) ---
+        _create_disaster_tables(cursor)
 
 
 def _table_columns(cursor, table_name: str) -> set:
@@ -387,3 +389,66 @@ def _create_crowd_tables(cursor):
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_snapshots_dest_time ON crowd_snapshots(destination_id, captured_at)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_predictions_dest ON crowd_predictions(destination_id, prediction_for)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_zones_dest ON destination_zones(destination_id)")
+
+
+def _create_disaster_tables(cursor):
+    """Live disaster / risk intelligence tables — additive only."""
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS disaster_articles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        dedupe_key TEXT NOT NULL UNIQUE,
+        title TEXT NOT NULL,
+        summary TEXT,
+        source TEXT,
+        url TEXT,
+        published_at TEXT,
+        event_type TEXT,
+        fetched_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        raw_json TEXT
+    )
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS disaster_risk_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_key TEXT NOT NULL UNIQUE,
+        event_type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        summary TEXT,
+        country TEXT NOT NULL DEFAULT 'India',
+        state TEXT,
+        district TEXT,
+        city TEXT,
+        location_label TEXT NOT NULL,
+        lat REAL NOT NULL,
+        lng REAL NOT NULL,
+        radius_m REAL NOT NULL DEFAULT 25000,
+        risk_score INTEGER NOT NULL DEFAULT 0,
+        risk_level TEXT NOT NULL DEFAULT 'LOW',
+        confidence_score INTEGER NOT NULL DEFAULT 0,
+        official_alert INTEGER NOT NULL DEFAULT 0,
+        source_kind TEXT NOT NULL DEFAULT 'news',
+        independent_sources INTEGER NOT NULL DEFAULT 1,
+        article_count INTEGER NOT NULL DEFAULT 1,
+        first_seen_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        last_seen_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        sources_json TEXT
+    )
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS geocode_cache (
+        place_key TEXT PRIMARY KEY,
+        display_name TEXT,
+        state TEXT,
+        district TEXT,
+        city TEXT,
+        lat REAL NOT NULL,
+        lng REAL NOT NULL,
+        source TEXT DEFAULT 'static',
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_disaster_events_active ON disaster_risk_events(is_active, risk_level)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_disaster_events_type ON disaster_risk_events(event_type)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_disaster_articles_type ON disaster_articles(event_type)")

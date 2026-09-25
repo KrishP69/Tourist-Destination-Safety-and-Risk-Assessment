@@ -1,0 +1,510 @@
+/* ==========================================================================
+   Destinations panel — clean cards, Near Me, List/Map
+   Preserves dark SafeTour identity; overrides cramped horizontal rows.
+   ========================================================================== */
+
+.dest-panel-header {
+  padding: 14px 14px 8px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  flex-shrink: 0;
+}
+.dest-panel-title-block .destinations-main-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+.dest-count-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.12);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.dest-panel-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.dest-location-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 10px 14px 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 42, 0.65);
+  font-size: 0.76rem;
+  color: #cbd5e1;
+  flex-shrink: 0;
+}
+.dest-location-banner.ready {
+  border-color: rgba(16, 185, 129, 0.28);
+  background: rgba(16, 185, 129, 0.08);
+  color: #a7f3d0;
+}
+.dest-location-banner.loading {
+  border-color: rgba(14, 165, 233, 0.3);
+  color: #7dd3fc;
+}
+.dest-loc-btn {
+  flex-shrink: 0;
+  border: 1px solid rgba(14, 165, 233, 0.4);
+  background: rgba(14, 165, 233, 0.15);
+  color: #e0f2fe;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.dest-loc-btn:hover,
+.dest-loc-btn:focus-visible {
+  background: rgba(14, 165, 233, 0.28);
+  outline: none;
+}
+
+.dest-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  padding: 10px 14px;
+  flex-shrink: 0;
+}
+.dest-list-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: 24px;
+  scrollbar-width: thin;
+  scrollbar-color: #38bdf8 rgba(15, 23, 42, 0.6);
+}
+.dest-list-panel::-webkit-scrollbar {
+  width: 8px;
+}
+.dest-list-panel::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.7);
+  border-radius: 6px;
+}
+.dest-list-panel::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #38bdf8, #0284c7);
+  border-radius: 6px;
+}
+.dest-list-panel::-webkit-scrollbar-thumb:hover {
+  background: #7dd3fc;
+}
+.dest-mode-group,
+.dest-view-group {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+.dest-tool-btn {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: Inter, sans-serif;
+}
+.dest-tool-btn:hover {
+  color: #e2e8f0;
+}
+.dest-tool-btn.active {
+  background: rgba(14, 165, 233, 0.18);
+  color: #7dd3fc;
+}
+.dest-tool-btn:focus-visible {
+  outline: 2px solid rgba(14, 165, 233, 0.55);
+  outline-offset: 1px;
+}
+
+.dest-section {
+  padding: 4px 14px 14px;
+}
+.dest-section-head {
+  margin-bottom: 10px;
+}
+.dest-section-head h4 {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dest-section-head p {
+  margin: 3px 0 0;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+.dest-nearby-section {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  margin-bottom: 6px;
+  padding-bottom: 12px;
+}
+
+.dest-card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.dest-modern-card {
+  background: #151e2e;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+.dest-modern-card:hover,
+.dest-modern-card:focus-visible {
+  border-color: rgba(14, 165, 233, 0.45);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  outline: none;
+}
+
+.dest-modern-media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: #0b1220;
+  overflow: hidden;
+}
+.dest-modern-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.dest-score-pill {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  min-width: 52px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  text-align: center;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  backdrop-filter: blur(8px);
+}
+.dest-score-pill.safe {
+  border-color: rgba(16, 185, 129, 0.5);
+}
+.dest-score-pill.moderate {
+  border-color: rgba(245, 158, 11, 0.5);
+}
+.dest-score-pill.caution {
+  border-color: rgba(249, 115, 22, 0.55);
+}
+.dest-score-label {
+  display: block;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+.dest-score-value {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #f8fafc;
+}
+.dest-score-pill.safe .dest-score-value { color: #34d399; }
+.dest-score-pill.moderate .dest-score-value { color: #fbbf24; }
+.dest-score-pill.caution .dest-score-value { color: #fb923c; }
+
+.dest-modern-body {
+  padding: 12px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dest-modern-name {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f8fafc;
+  line-height: 1.3;
+  /* Allow wrap — no ellipsis collision */
+  white-space: normal;
+  word-break: break-word;
+}
+.dest-modern-dist {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #7dd3fc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dest-modern-dist.muted {
+  color: #64748b;
+  font-weight: 500;
+}
+.dest-modern-meta {
+  margin: 0;
+  font-size: 0.74rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+.dest-modern-hours {
+  margin: 2px 0 0;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.4;
+}
+.dest-open-chip {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.dest-open-chip.open {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+.dest-open-chip.closed {
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+}
+.dest-modern-footer {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.dest-view-link {
+  margin-left: auto;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #38bdf8;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.dest-chip.alert {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.dest-view-all-nearby {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: transparent;
+  color: #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dest-view-all-nearby:hover {
+  border-color: rgba(14, 165, 233, 0.4);
+  color: #7dd3fc;
+}
+/* Author display rules must not defeat HTML hidden / panel toggles */
+.dest-view-all-nearby[hidden],
+#destMapPanel[hidden],
+#destListPanel[hidden],
+#destNearbySection[hidden],
+.dest-panel-hidden {
+  display: none !important;
+}
+
+.dest-empty-state {
+  text-align: center;
+  padding: 28px 16px;
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+.dest-empty-state.compact {
+  padding: 12px 8px;
+  text-align: left;
+}
+.dest-empty-state .muted {
+  color: #64748b;
+  font-size: 0.74rem;
+}
+.dest-empty-state i {
+  font-size: 1.4rem;
+  color: #475569;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.dest-map-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 14px 14px;
+}
+.destinations-side-map {
+  width: 100%;
+  height: min(52vh, 420px);
+  min-height: 280px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  overflow: hidden;
+  background: #0b1220;
+}
+.dest-map-hint {
+  margin: 8px 2px 0;
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.dest-side-pin {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+.dest-you-here {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #0284c7;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 6px rgba(14, 165, 233, 0.25);
+}
+
+/* Wider inspector: 2-column cards on large screens */
+@media (min-width: 1280px) {
+  body.tourist-mode .inspector-wrapper-card .dest-card-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 1023px) {
+  .dest-card-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .destinations-side-map {
+    height: 42vh;
+  }
+}
+
+@media (max-width: 640px) {
+  .dest-card-grid {
+    grid-template-columns: 1fr;
+  }
+  .dest-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .dest-mode-group,
+  .dest-view-group {
+    width: 100%;
+    justify-content: stretch;
+  }
+  .dest-tool-btn {
+    flex: 1;
+    justify-content: center;
+  }
+  .dest-location-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Override old horizontal card rules inside tourist destinations panel */
+body.tourist-mode #destinationsListView .destination-card {
+  display: none;
+}
+body.tourist-mode .destinations-scroll-grid {
+  display: none;
+}
+body.tourist-mode #destinationsGrid.dest-card-grid,
+body.tourist-mode #destNearbyGrid.dest-card-grid {
+  display: grid;
+}
+
+/* Make the right destinations column scrollable */
+body.tourist-mode .inspector-wrapper-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+  height: calc(100vh - var(--st-nav-h, 64px) - 90px);
+  max-height: calc(100vh - var(--st-nav-h, 64px) - 90px);
+  min-height: 0;
+}
+body.tourist-mode #destinationsListView.destinations-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  height: auto;
+}
+body.tourist-mode #destListPanel.dest-list-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+}
+body.tourist-mode #destinationDetailView {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+@media (max-width: 1023px) {
+  body.tourist-mode .inspector-wrapper-card {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  body.tourist-mode #destListPanel.dest-list-panel {
+    overflow: visible !important;
+  }
+}

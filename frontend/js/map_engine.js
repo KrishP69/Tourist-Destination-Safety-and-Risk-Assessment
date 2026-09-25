@@ -13,39 +13,43 @@ let userLocationLayer = null;
 function initSafetyMap() {
   if (mapInstance) return;
 
-  // Initialize Map centered on India (lat: 22.0, lng: 79.5, zoom: 5)
-  mapInstance = L.map("safetyMap", {
-    zoomControl: true,
+  const mapEl = document.getElementById("safetyMap");
+  if (!mapEl) return;
+
+  // Ensure the container has a real pixel size before Leaflet measures it
+  if (!mapEl.style.height && mapEl.clientHeight < 200) {
+    mapEl.style.minHeight = "520px";
+    mapEl.style.height = "520px";
+  }
+
+  // Custom float controls handle zoom — hide default Leaflet zoom to avoid duplicates
+  mapInstance = L.map(mapEl, {
+    zoomControl: false,
+    attributionControl: true,
     minZoom: 4,
-    maxZoom: 18
+    maxZoom: 19,
+    preferCanvas: false,
   }).setView([22.5, 79.5], 5);
 
-  // 1. Watermark-Free Esri World Dark Gray Base
-  baseDarkLayer = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-    {
-      attribution: 'Tiles &copy; Esri &mdash; National Geographic, DeLorme, HERE, NRCan',
-      maxZoom: 18,
-      subdomains: ["server", "services"]
-    }
-  ).addTo(mapInstance);
+  // Dense dark map like the original SafeTour look (OSM labels + dark CSS).
+  // Esri World Dark Gray looked washed-out; Carto dark needs an API key.
+  baseDarkLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
+    subdomains: "abc",
+    maxZoom: 19,
+    className: "safetour-osm-dark",
+  }).addTo(mapInstance);
 
-  // 2. High-contrast Reference Labels Overlay
-  baseLabelsLayer = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
-    {
-      attribution: '',
-      maxZoom: 18,
-      pane: 'overlayPane'
-    }
-  ).addTo(mapInstance);
+  baseLabelsLayer = null;
 
-  // 3. Optional Satellite Terrain View (Esri World Imagery)
+  // Optional Satellite Terrain View (Esri World Imagery)
   satelliteLayer = L.tileLayer(
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     {
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP',
-      maxZoom: 18
+      attribution:
+        'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP',
+      maxZoom: 18,
     }
   );
 
@@ -96,12 +100,17 @@ function initSafetyMap() {
   document.getElementById("toggleSatelliteView")?.addEventListener("change", (e) => {
     if (e.target.checked) {
       mapInstance.removeLayer(baseDarkLayer);
+      if (baseLabelsLayer) mapInstance.removeLayer(baseLabelsLayer);
       mapInstance.addLayer(satelliteLayer);
     } else {
       mapInstance.removeLayer(satelliteLayer);
       mapInstance.addLayer(baseDarkLayer);
+      if (baseLabelsLayer) mapInstance.addLayer(baseLabelsLayer);
     }
   });
+
+  window.getSafetyMap = () => mapInstance;
+  window.flyToCoordinates = flyToCoordinates;
 
   // Listen for Geolocation updates to draw user marker and 25km geofence ring
   window.addEventListener('locationUpdated', (e) => {
@@ -110,6 +119,23 @@ function initSafetyMap() {
 
   if (window.GeolocationEngine && window.GeolocationEngine.currentPosition) {
     renderUserLocationPin(window.GeolocationEngine.currentPosition);
+  }
+
+  // Recalc size after tourist layout settles (flex/grid + tall map)
+  const fixSize = () => {
+    try {
+      mapInstance.invalidateSize({ animate: false });
+    } catch (_) {}
+  };
+  fixSize();
+  setTimeout(fixSize, 100);
+  setTimeout(fixSize, 400);
+  setTimeout(fixSize, 1000);
+  window.addEventListener("load", fixSize);
+  window.addEventListener("resize", fixSize);
+  // When fonts/layout shift after first paint
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(fixSize).catch(() => {});
   }
 }
 

@@ -15,18 +15,21 @@
   <!-- Leaflet Map CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   
-  <!-- App Stylesheets -->
-  <link rel="stylesheet" href="/static/css/style.css">
-  <link rel="stylesheet" href="/static/css/map.css">
-  <link rel="stylesheet" href="/static/css/pulse.css">
-  <link rel="stylesheet" href="/static/css/crowd.css">
-  <link rel="stylesheet" href="/static/css/ux.css">
+  <!-- App Stylesheets (v= busts browser cache after map UX fixes) -->
+  <link rel="stylesheet" href="/static/css/style.css?v=risk1">
+  <link rel="stylesheet" href="/static/css/map.css?v=risk1">
+  <link rel="stylesheet" href="/static/css/pulse.css?v=risk1">
+  <link rel="stylesheet" href="/static/css/crowd.css?v=risk1">
+  <link rel="stylesheet" href="/static/css/ux.css?v=risk1">
+  <link rel="stylesheet" href="/static/css/tourist.css?v=dest3">
+  <link rel="stylesheet" href="/static/css/destinations.css?v=dest3">
+  <link rel="stylesheet" href="/static/css/live_risk.css?v=risk1">
 </head>
-<body>
-  <!-- Ambient Background Glows -->
-  <div class="ambient-glow glow-1"></div>
-  <div class="ambient-glow glow-2"></div>
-  <div class="ambient-glow glow-3"></div>
+<body class="tourist-mode">
+  <!-- Soft ambient (kept for brand continuity, toned down in CSS) -->
+  <div class="ambient-glow glow-1" aria-hidden="true"></div>
+  <div class="ambient-glow glow-2" aria-hidden="true"></div>
+  <div class="ambient-glow glow-3" aria-hidden="true"></div>
 
   <!-- Real-Time Toast Notification Banner -->
   <div id="liveToastNotification" class="live-toast-banner" style="display:none;">
@@ -43,20 +46,30 @@
           <span class="shield-pulse"></span>
         </div>
         <div class="logo-text">
-          <span class="brand-title">SafeTour <span class="ai-badge" style="background: linear-gradient(135deg, #f59e0b, #10b981);">BHARAT</span></span>
-          <span class="brand-subtitle ux-sub">India Tourist Safety &amp; Crowd Intelligence Network</span>
+          <span class="brand-title">SafeTour <span class="ai-badge">BHARAT</span></span>
+          <span class="brand-subtitle ux-sub">Tourist safety companion</span>
         </div>
       </div>
 
       <div class="nav-center">
+        <nav class="tourist-nav-links hide-mobile" aria-label="Primary">
+          <button type="button" class="nav-text-link active" data-jump="map" id="navLinkHome">Home</button>
+          <button type="button" class="nav-text-link" id="btnOpenExplore">Explore</button>
+          <button type="button" class="nav-text-link" data-jump="safety" id="navLinkSafety">Safety</button>
+          <button type="button" class="nav-text-link" data-jump="alerts" id="navLinkAlerts">Alerts</button>
+          <button type="button" class="nav-text-link" id="navLinkTickets">My Tickets</button>
+        </nav>
         <div class="nav-search-bar">
           <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
-          <input type="text" id="destinationSearchInput" placeholder="Search destinations…" autocomplete="off" aria-label="Search destination">
+          <input type="text" id="destinationSearchInput" placeholder="Search places…" autocomplete="off" aria-label="Search places on map">
           <button id="clearSearchBtn" class="clear-btn" style="display:none;" aria-label="Clear search"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <button id="btnAcquireCurrentGPS" class="nav-btn secondary" type="button" title="Enable or use your location" aria-label="My Location">
+        <button id="btnAcquireCurrentGPS" class="nav-btn secondary nav-location-btn" type="button" title="Enable or use your location" aria-label="My Location">
           <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
-          <span id="myLocationLabel">My Location</span>
+          <span class="nav-location-text">
+            <span id="myLocationLabel">My Location</span>
+            <span id="myLocationPlace" class="nav-location-place">—</span>
+          </span>
         </button>
       </div>
 
@@ -68,10 +81,6 @@
         <button type="button" id="btnMyTickets" class="nav-btn primary-ticket hide-mobile" aria-label="My Tickets">
           <i class="fa-solid fa-ticket" aria-hidden="true"></i>
           <span>My Tickets</span>
-        </button>
-        <button type="button" id="triggerSosBtn" class="nav-btn sos-btn hide-mobile" title="Press and hold to open SOS" aria-label="SOS emergency — press and hold">
-          <i class="fa-solid fa-bell" aria-hidden="true"></i>
-          <span>SOS</span>
         </button>
         <div id="headerUserCapsuleContainer" class="hide-mobile"></div>
         <div class="nav-more-wrap hide-mobile">
@@ -131,73 +140,88 @@
     </div>
   </div>
 
-  <!-- Live KPI Metrics Bar -->
-  <section class="kpi-banner">
-    <div class="kpi-card">
-      <div class="kpi-icon emerald"><i class="fa-solid fa-monument"></i></div>
-      <div class="kpi-info">
-        <span class="kpi-value" id="kpiTotalDest">--</span>
-        <span class="kpi-label">Indian Destinations</span>
+  <!-- Explore drawer: KPIs + filters (progressive disclosure — all features preserved) -->
+  <div id="exploreDrawerBackdrop" class="explore-drawer-backdrop" aria-hidden="true">
+    <aside id="exploreDrawer" class="explore-drawer" role="dialog" aria-label="Explore destinations">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;">
+        <div>
+          <h3>Explore</h3>
+          <p class="muted">Browse destinations, filters, and network stats</p>
+        </div>
+        <button type="button" class="map-float-btn" id="btnCloseExplore" aria-label="Close explore">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-icon cobalt"><i class="fa-solid fa-shield-heart"></i></div>
-      <div class="kpi-info">
-        <span class="kpi-value" id="kpiAvgScore">--</span>
-        <span class="kpi-label">Average Safety Index</span>
-      </div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-icon amber"><i class="fa-solid fa-users-viewfinder"></i></div>
-      <div class="kpi-info">
-        <span class="kpi-value" id="kpiPulseVotes">--</span>
-        <span class="kpi-label">Ground Pulse Votes</span>
-      </div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-icon rose"><i class="fa-solid fa-satellite-dish"></i></div>
-      <div class="kpi-info">
-        <span class="kpi-value" id="kpiActiveIncidents">--</span>
-        <span class="kpi-label">Active Field Alerts</span>
-      </div>
-    </div>
-  </section>
 
-  <!-- Filter Strip -->
-  <section class="filter-strip">
-    <div class="filter-group">
-      <span class="filter-label"><i class="fa-solid fa-map-location-dot"></i> Region:</span>
-      <button class="filter-chip active" data-filter="region" data-value="All">All India</button>
-      <button class="filter-chip" data-filter="region" data-value="North India">North India</button>
-      <button class="filter-chip" data-filter="region" data-value="South India">South India</button>
-      <button class="filter-chip" data-filter="region" data-value="West India">West India</button>
-      <button class="filter-chip" data-filter="region" data-value="East & North-East India">East & North-East</button>
-    </div>
+      <!-- Live KPI Metrics (preserved IDs) -->
+      <section class="kpi-banner">
+        <div class="kpi-card">
+          <div class="kpi-icon emerald"><i class="fa-solid fa-monument"></i></div>
+          <div class="kpi-info">
+            <span class="kpi-value" id="kpiTotalDest">--</span>
+            <span class="kpi-label">Destinations</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon cobalt"><i class="fa-solid fa-shield-heart"></i></div>
+          <div class="kpi-info">
+            <span class="kpi-value" id="kpiAvgScore">--</span>
+            <span class="kpi-label">Avg safety</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon amber"><i class="fa-solid fa-users-viewfinder"></i></div>
+          <div class="kpi-info">
+            <span class="kpi-value" id="kpiPulseVotes">--</span>
+            <span class="kpi-label">Ground Pulse</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon rose"><i class="fa-solid fa-satellite-dish"></i></div>
+          <div class="kpi-info">
+            <span class="kpi-value" id="kpiActiveIncidents">--</span>
+            <span class="kpi-label">Active alerts</span>
+          </div>
+        </div>
+      </section>
 
-    <div class="filter-group">
-      <span class="filter-label"><i class="fa-solid fa-filter"></i> Risk Tier:</span>
-      <button class="filter-chip active" data-filter="risk_tier" data-value="All">All Tiers</button>
-      <button class="filter-chip chip-safe" data-filter="risk_tier" data-value="Low Risk (Safe)">
-        <span class="dot safe"></span> Safe Haven (80-100)
-      </button>
-      <button class="filter-chip chip-moderate" data-filter="risk_tier" data-value="Moderate Risk">
-        <span class="dot moderate"></span> Moderate (60-79)
-      </button>
-    </div>
+      <!-- Filters (preserved) -->
+      <section class="filter-strip">
+        <div class="filter-group">
+          <span class="filter-label"><i class="fa-solid fa-map-location-dot"></i> Region</span>
+          <button class="filter-chip active" data-filter="region" data-value="All">All India</button>
+          <button class="filter-chip" data-filter="region" data-value="North India">North</button>
+          <button class="filter-chip" data-filter="region" data-value="South India">South</button>
+          <button class="filter-chip" data-filter="region" data-value="West India">West</button>
+          <button class="filter-chip" data-filter="region" data-value="East & North-East India">East &amp; NE</button>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label"><i class="fa-solid fa-filter"></i> Risk</span>
+          <button class="filter-chip active" data-filter="risk_tier" data-value="All">All</button>
+          <button class="filter-chip chip-safe" data-filter="risk_tier" data-value="Low Risk (Safe)">
+            <span class="dot safe"></span> Safe
+          </button>
+          <button class="filter-chip chip-moderate" data-filter="risk_tier" data-value="Moderate Risk">
+            <span class="dot moderate"></span> Moderate
+          </button>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label"><i class="fa-solid fa-shapes"></i> Category</span>
+          <select id="categoryFilterSelect" class="custom-select" aria-label="Category filter">
+            <option value="All">All Categories</option>
+            <option value="Heritage & Forts">Heritage & Forts</option>
+            <option value="Spiritual & Sacred">Spiritual & Sacred</option>
+            <option value="Mountain & Adventure">Mountain & Adventure</option>
+            <option value="Beach & Coastal">Beach & Coastal</option>
+            <option value="Wildlife & Nature">Wildlife & Nature</option>
+            <option value="Urban & Culture">Urban & Culture</option>
+          </select>
+        </div>
+      </section>
 
-    <div class="filter-group right-align">
-      <span class="filter-label"><i class="fa-solid fa-shapes"></i> Category:</span>
-      <select id="categoryFilterSelect" class="custom-select">
-        <option value="All">All Categories</option>
-        <option value="Heritage & Forts">Heritage & Forts</option>
-        <option value="Spiritual & Sacred">Spiritual & Sacred</option>
-        <option value="Mountain & Adventure">Mountain & Adventure</option>
-        <option value="Beach & Coastal">Beach & Coastal</option>
-        <option value="Wildlife & Nature">Wildlife & Nature</option>
-        <option value="Urban & Culture">Urban & Culture</option>
-      </select>
-    </div>
-  </section>
+      <p class="muted" style="margin-top:8px;">Tip: tap a destination on the map or in the list to see safety, crowd, and tickets.</p>
+    </aside>
+  </div>
 
   <!-- Main Work Area: Geospatial Map + Destination Safety Inspector -->
   <main class="main-dashboard-grid">
@@ -205,10 +229,20 @@
     <div class="map-wrapper-card">
       <div class="map-controls-header">
         <div class="map-title-box">
-          <i class="fa-solid fa-map-pin"></i>
-          <span>Crowd &amp; Safety Map</span>
+          <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
+          <span>Map</span>
         </div>
-        <div class="map-layer-toggles ux-layers">
+      </div>
+      <div id="safetyMap" class="interactive-leaflet-map" role="application" aria-label="Interactive safety map of India"></div>
+      <div class="map-float-tools" aria-label="Map controls">
+        <button type="button" class="map-float-btn" id="btnMapZoomIn" title="Zoom in" aria-label="Zoom in"><i class="fa-solid fa-plus"></i></button>
+        <button type="button" class="map-float-btn" id="btnMapZoomOut" title="Zoom out" aria-label="Zoom out"><i class="fa-solid fa-minus"></i></button>
+        <button type="button" class="map-float-btn" id="btnMapRecenter" title="My location" aria-label="Center on my location"><i class="fa-solid fa-location-crosshairs"></i></button>
+        <button type="button" class="map-float-btn" id="btnMapLayers" title="Layers" aria-label="Map layers" aria-expanded="false"><i class="fa-solid fa-layer-group"></i></button>
+      </div>
+      <div id="layersPopover" class="layers-popover" role="dialog" aria-label="Map layers">
+        <p style="margin:0 0 8px;font-size:0.72rem;color:#94a3b8;font-weight:600;">Layers</p>
+        <div class="map-layer-toggles ux-layers" id="mapLayerTogglesDesktop">
           <label class="layer-switch">
             <input type="checkbox" id="toggleCrowdLayer" checked>
             <span class="slider round"></span>
@@ -222,12 +256,12 @@
           <label class="layer-switch">
             <input type="checkbox" id="toggleIncidents" checked>
             <span class="slider round"></span>
-            <span class="switch-label">Hazards</span>
+            <span class="switch-label">Alerts</span>
           </label>
           <label class="layer-switch">
             <input type="checkbox" id="toggleEmergency">
             <span class="slider round"></span>
-            <span class="switch-label">Hospitals / Police</span>
+            <span class="switch-label">Help</span>
           </label>
           <label class="layer-switch">
             <input type="checkbox" id="toggleSatelliteView">
@@ -235,28 +269,146 @@
             <span class="switch-label">Satellite</span>
           </label>
         </div>
+        <p style="margin:8px 0 0;font-size:0.68rem;color:#64748b;">Crowd shows aggregated zones only — never individual people.</p>
       </div>
-      <div id="safetyMap" class="interactive-leaflet-map"></div>
-      <div class="map-legend">
-        <span class="legend-item"><span class="legend-dot safe"></span> Low crowd / Safe</span>
+      <div class="map-legend" aria-label="Map legend">
+        <span class="legend-item"><span class="legend-dot safe"></span> Safe / Low</span>
         <span class="legend-item"><span class="legend-dot moderate"></span> Moderate</span>
-        <span class="legend-item"><span class="legend-dot caution"></span> High</span>
-        <span class="legend-item"><span class="legend-dot critical"></span> Very High / Incident</span>
+        <span class="legend-item"><span class="legend-dot caution"></span> Caution</span>
+        <span class="legend-item"><span class="legend-dot critical"></span> Alert</span>
+        <span class="legend-item live-risk-legend" title="Live risk layer">
+          <span class="legend-dot risk-crit"></span> Live risk
+        </span>
       </div>
     </div>
+
+    <!-- Snapshot cards between map and list on mobile; below map column via grid span helper -->
+    <div class="tourist-snapshot-row" id="touristSnapshotRow">
+      <article class="snapshot-card" aria-live="polite">
+        <h4><i class="fa-solid fa-shield-halved" style="color:#10b981;"></i> Your safety snapshot</h4>
+        <div class="snapshot-metric" id="touristSafetyScore">—</div>
+        <p id="touristSafetyBlurb">Open the app and allow location to see nearby safety context.</p>
+        <p style="margin-top:6px;font-size:0.72rem;color:#94a3b8;">
+          Network avg: <strong id="touristNetworkAvg">—</strong>
+          · Alerts: <strong id="touristAlertCount">—</strong>
+        </p>
+      </article>
+      <article class="snapshot-card">
+        <h4><i class="fa-solid fa-hospital" style="color:#38bdf8;"></i> Nearby help</h4>
+        <ul class="snapshot-list" id="touristNearbyList">
+          <li class="snapshot-empty">Enable Hospitals/Police layer or open a destination for facilities.</li>
+        </ul>
+      </article>
+      <article class="snapshot-card live-risk-card" id="liveRiskCard">
+        <h4><i class="fa-solid fa-satellite-dish" style="color:#f97316;"></i> Live safety intelligence
+          <span id="liveRiskUpdated" style="margin-left:auto;font-weight:500;">Checking…</span>
+        </h4>
+        <div id="liveRiskSummaryBody">
+          <p class="live-risk-empty">Loading live risk…</p>
+        </div>
+        <div class="live-risk-filters" aria-label="Risk type filters">
+          <button type="button" class="active" data-risk-filter="event_type" data-value="all">All</button>
+          <button type="button" data-risk-filter="event_type" data-value="flood">Flood</button>
+          <button type="button" data-risk-filter="event_type" data-value="cyclone">Cyclone</button>
+          <button type="button" data-risk-filter="event_type" data-value="landslide">Landslide</button>
+          <button type="button" data-risk-filter="event_type" data-value="earthquake">Earthquake</button>
+          <button type="button" data-risk-filter="event_type" data-value="wildfire">Wildfire</button>
+        </div>
+        <div class="live-risk-filters" aria-label="Risk level filters">
+          <button type="button" class="active" data-risk-filter="risk_level" data-value="all">All risk</button>
+          <button type="button" data-risk-filter="risk_level" data-value="CRITICAL">Critical</button>
+          <button type="button" data-risk-filter="risk_level" data-value="HIGH">High</button>
+          <button type="button" data-risk-filter="risk_level" data-value="MODERATE">Moderate</button>
+          <button type="button" data-risk-filter="risk_level" data-value="LOW">Low</button>
+        </div>
+        <div class="live-risk-filters" aria-label="Source filters">
+          <button type="button" class="active" data-risk-filter="source" data-value="all">All sources</button>
+          <button type="button" data-risk-filter="source" data-value="official">Official</button>
+          <button type="button" data-risk-filter="source" data-value="news">News</button>
+        </div>
+        <ul id="liveRiskEventList"></ul>
+        <div class="live-risk-actions">
+          <button type="button" id="btnRiskViewMap"><i class="fa-solid fa-map"></i> View map</button>
+          <button type="button" id="btnRiskRefresh"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+        </div>
+      </article>
+      <article class="snapshot-card">
+        <h4><i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b;"></i> Active alerts</h4>
+        <ul class="snapshot-list" id="touristAlertsList">
+          <li class="snapshot-empty">Loading alerts…</li>
+        </ul>
+        <button type="button" class="btn-crowd-ghost" id="btnJumpToAlerts" style="margin-top:8px;">View alert stream</button>
+      </article>
+    </div>
+
+    <div id="liveRiskNearbyBanner" hidden role="status"></div>
 
     <!-- Inspector / Detail Side -->
     <div class="inspector-wrapper-card">
       <!-- Destination Cards List View (Default) -->
       <div id="destinationsListView" class="destinations-view">
-        <div class="view-header">
-          <div class="view-title-row">
-            <h3 class="destinations-main-title"><i class="fa-solid fa-compass"></i> Iconic Indian Destinations <span class="dest-count-pill">(<span id="destCountBadge">0</span>)</span></h3>
+        <div class="dest-panel-header">
+          <div class="dest-panel-title-block">
+            <h3 class="destinations-main-title">
+              Destinations
+              <span class="dest-count-pill"><span id="destCountBadge">0</span> destinations</span>
+            </h3>
+            <p class="dest-panel-subtitle">Explore safe places around you</p>
           </div>
-          <span class="hint-text">Select any spot to view safety ratings, on-site pulse & emergency services</span>
         </div>
-        <div id="destinationsGrid" class="destinations-scroll-grid">
-          <!-- Dynamic cards injected via app.js -->
+
+        <div id="destLocationBanner" class="dest-location-banner" role="status" aria-live="polite">
+          <span id="destLocationBannerText">Enable location to see destinations near you</span>
+          <button type="button" class="dest-loc-btn" id="btnDestEnableLocation" aria-label="Enable location for nearby destinations">
+            <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i> Enable Location
+          </button>
+        </div>
+
+        <div class="dest-toolbar" role="toolbar" aria-label="Destination views">
+          <div class="dest-mode-group" role="group" aria-label="Sort mode">
+            <button type="button" class="dest-tool-btn active" id="destModeNearMe" data-mode="near" aria-pressed="true">
+              <i class="fa-solid fa-location-dot" aria-hidden="true"></i> Near Me
+            </button>
+            <button type="button" class="dest-tool-btn" id="destModeAll" data-mode="all" aria-pressed="false">
+              All Destinations
+            </button>
+          </div>
+          <div class="dest-view-group" role="group" aria-label="Display mode">
+            <button type="button" class="dest-tool-btn active" id="destViewList" data-view="list" aria-pressed="true">
+              <i class="fa-solid fa-list" aria-hidden="true"></i> List
+            </button>
+            <button type="button" class="dest-tool-btn" id="destViewMap" data-view="map" aria-pressed="false">
+              <i class="fa-solid fa-map" aria-hidden="true"></i> Map
+            </button>
+          </div>
+        </div>
+
+        <div id="destListPanel" class="dest-list-panel">
+          <section id="destNearbySection" class="dest-section dest-nearby-section" hidden>
+            <div class="dest-section-head">
+              <h4><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Near You</h4>
+              <p>Places closest to your current location</p>
+            </div>
+            <div id="destNearbyGrid" class="dest-card-grid"></div>
+            <button type="button" class="dest-view-all-nearby" id="btnViewAllNearby" hidden>
+              View all nearby <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+            </button>
+          </section>
+
+          <section id="destOtherSection" class="dest-section">
+            <div class="dest-section-head" id="destOtherHead">
+              <h4 id="destOtherTitle">Destinations</h4>
+              <p id="destOtherHint">Select any spot for safety ratings, on-site pulse &amp; emergency services</p>
+            </div>
+            <div id="destinationsGrid" class="dest-card-grid">
+              <!-- Dynamic cards -->
+            </div>
+          </section>
+        </div>
+
+        <div id="destMapPanel" class="dest-map-panel" hidden>
+          <div id="destinationsSideMap" class="destinations-side-map" role="application" aria-label="Destinations map"></div>
+          <p class="dest-map-hint">Tap a marker for safety score and details. Your location appears when enabled.</p>
         </div>
       </div>
 
@@ -336,6 +488,8 @@
             <p id="detailHazardDesc" style="color: #e2e8f0; font-size: 0.82rem; margin: 6px 0 0 0; line-height: 1.4;">Active field telemetry advisory.</p>
           </div>
         </div>
+
+        <div id="detailLiveRiskNear" class="hazard-alert-banner" style="display:none;border-color:rgba(249,115,22,0.35);background:rgba(249,115,22,0.08);color:#fed7aa;padding:10px 12px;border-radius:12px;margin:10px 0;font-size:0.82rem;line-height:1.4;"></div>
 
         <!-- BEST TIME TO VISIT -->
         <div class="best-time-card" id="bestTimeCard">
@@ -661,7 +815,7 @@
     <div class="ticker-header">
       <div class="ticker-title">
         <span class="live-dot"></span>
-        <span>LIVE BHARAT TRAVELER HAZARD & SITUATION STREAM</span>
+        <span>Live hazard &amp; situation alerts</span>
       </div>
       <button id="refreshIncidentsBtn" class="btn-ticker-refresh"><i class="fa-solid fa-rotate"></i> Refresh</button>
     </div>
@@ -669,6 +823,21 @@
       <!-- Injected dynamically -->
     </div>
   </section>
+
+  <!-- Floating SOS (press & hold — same confirmation flow) -->
+  <button type="button" id="fabSosBtn" class="fab-sos" title="Press and hold for emergency SOS" aria-label="Emergency SOS — press and hold to activate">
+    <i class="fa-solid fa-bell" aria-hidden="true"></i>
+    SOS
+  </button>
+  <div class="fab-sos-hint" aria-hidden="true">Press &amp; hold · confirmation required</div>
+
+  <!-- Mobile bottom navigation -->
+  <nav class="tourist-bottom-nav" aria-label="Primary">
+    <button type="button" class="active" data-nav="map" id="navTabMap"><i class="fa-solid fa-map"></i> Map</button>
+    <button type="button" data-nav="explore" id="navTabExplore"><i class="fa-solid fa-compass"></i> Explore</button>
+    <button type="button" data-nav="alerts" id="navTabAlerts"><i class="fa-solid fa-triangle-exclamation"></i> Alerts</button>
+    <button type="button" data-nav="account" id="navTabAccount"><i class="fa-solid fa-user"></i> Account</button>
+  </nav>
 
   <!-- MODAL: Ground Pulse MCQ Voting -->
   <div id="groundPulseModal" class="pulse-modal-backdrop">
@@ -1112,19 +1281,22 @@
 
   <!-- Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="/static/js/auth_service.js"></script>
-  <script src="/static/js/geolocation_engine.js"></script>
-  <script src="/static/js/location_presence.js"></script>
-  <script src="/static/js/crowd_dashboard.js"></script>
-  <script src="/static/js/smart_booking.js"></script>
-  <script src="/static/js/best_time.js"></script>
-  <script src="/static/js/ux_shell.js"></script>
-  <script src="/static/js/ground_pulse.js"></script>
-  <script src="/static/js/risk_calculator.js"></script>
-  <script src="/static/js/map_engine.js"></script>
-  <script src="/static/js/incident_feed.js"></script>
-  <script src="/static/js/sos_hub.js"></script>
-  <script src="/static/js/app.js"></script>
+  <script src="/static/js/auth_service.js?v=risk1"></script>
+  <script src="/static/js/geolocation_engine.js?v=risk1"></script>
+  <script src="/static/js/location_presence.js?v=risk1"></script>
+  <script src="/static/js/crowd_dashboard.js?v=risk1"></script>
+  <script src="/static/js/smart_booking.js?v=risk1"></script>
+  <script src="/static/js/best_time.js?v=risk1"></script>
+  <script src="/static/js/ux_shell.js?v=risk1"></script>
+  <script src="/static/js/tourist_shell.js?v=risk1"></script>
+  <script src="/static/js/destinations_panel.js?v=dest3"></script>
+  <script src="/static/js/ground_pulse.js?v=risk1"></script>
+  <script src="/static/js/risk_calculator.js?v=risk1"></script>
+  <script src="/static/js/map_engine.js?v=risk1"></script>
+  <script src="/static/js/live_risk.js?v=risk1"></script>
+  <script src="/static/js/incident_feed.js?v=risk1"></script>
+  <script src="/static/js/sos_hub.js?v=risk1"></script>
+  <script src="/static/js/app.js?v=risk1"></script>
 
   <!-- Inline Auth Helpers for Form Handling -->
   <script>

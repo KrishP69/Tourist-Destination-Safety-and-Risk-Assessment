@@ -31,6 +31,22 @@ CROWD_SNAPSHOT_INTERVAL_SEC = int(os.getenv("CROWD_SNAPSHOT_INTERVAL", "120"))
 DEFAULT_GEOFENCE_RADIUS_M = float(os.getenv("DEFAULT_GEOFENCE_RADIUS_M", "800"))
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")  # optional; Open-Meteo needs no key
 
+# Live Disaster / Risk Intelligence (additive)
+GDELT_DOC_API_URL = os.getenv(
+    "GDELT_DOC_API_URL",
+    "https://api.gdeltproject.org/api/v2/doc/doc",
+)
+DISASTER_ALERT_API_URL = os.getenv("DISASTER_ALERT_API_URL", "")  # optional CAP/SACHET feed
+NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")  # reserved; Google News RSS needs no key
+DISASTER_POLL_INTERVAL_SEC = int(os.getenv("DISASTER_POLL_INTERVAL_SEC", "600"))  # 10 min
+DISASTER_TIMESPAN = os.getenv("DISASTER_TIMESPAN", "24h")
+DISASTER_MAX_ARTICLES = int(os.getenv("DISASTER_MAX_ARTICLES", "60"))
+DISASTER_EVENT_TTL_HOURS = int(os.getenv("DISASTER_EVENT_TTL_HOURS", "48"))
+# Risk score thresholds (0-100)
+RISK_LOW_MAX = int(os.getenv("RISK_LOW_MAX", "24"))
+RISK_MODERATE_MAX = int(os.getenv("RISK_MODERATE_MAX", "49"))
+RISK_HIGH_MAX = int(os.getenv("RISK_HIGH_MAX", "74"))
+
 # Estimation weights (must roughly sum to 1.0 for interpretability)
 WEIGHT_OBSERVED_GPS = float(os.getenv("WEIGHT_OBSERVED_GPS", "0.35"))
 WEIGHT_BOOKINGS = float(os.getenv("WEIGHT_BOOKINGS", "0.30"))

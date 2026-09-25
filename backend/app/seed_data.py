@@ -1,6 +1,7 @@
 import json
 from .database import get_db, init_db
 from .auth import hash_password
+from .seed_destinations_extra import ADDITIONAL_INDIA_DESTINATIONS
 
 INDIA_DESTINATIONS = [
     # =========================================================================
@@ -1189,8 +1190,15 @@ INDIA_DESTINATIONS = [
             {"name": "Indira Gandhi General Hospital Kavaratti", "type": "Hospital", "phone": "+91-4896-262234", "address": "Hospital Road, Kavaratti", "lat": 10.5650, "lng": 72.6400}
         ],
         "advisory": {"title": "Coral Reef Conservation & Maritime Monsoon Advisory", "level": "Advisory", "summary": "Strict environmental protection enforced under the Wildlife Protection Act. Snorkeling and boat diving restricted to authorized marine corridors."}
-    }
+    },
 ]
+
+# Expand with additional real destinations (unique names only)
+_existing_names = {d["name"] for d in INDIA_DESTINATIONS}
+for _extra in ADDITIONAL_INDIA_DESTINATIONS:
+    if _extra["name"] not in _existing_names:
+        INDIA_DESTINATIONS.append(_extra)
+        _existing_names.add(_extra["name"])
 
 REAL_TIME_HAZARDS = [
     {
@@ -1435,6 +1443,57 @@ SAMPLE_PULSE_VOTES = [
     }
 ]
 
+def _insert_destination_bundle(cursor, d, dest_id_map):
+    """Insert one destination + metrics/tips/emergency/advisory. Mutates dest_id_map."""
+    cursor.execute("""
+        INSERT INTO destinations (
+            name, state, region, country, category, lat, lng,
+            overall_safety_score, risk_tier, description, image_url,
+            best_visit_time, dress_code_etiquette, opening_time, closing_time,
+            weekly_off_day, peak_rush_hours, entry_fee_domestic, entry_fee_foreign, booking_portal_url
+        ) VALUES (?, ?, ?, 'India', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        d["name"], d["state"], d["region"], d["category"], d["lat"], d["lng"],
+        d["overall_safety_score"], d["risk_tier"], d["description"], d["image_url"],
+        d["best_visit_time"], d["dress_code_etiquette"],
+        d.get("opening_time", "06:00"), d.get("closing_time", "18:30"),
+        d.get("weekly_off_day", "None"), d.get("peak_rush_hours", "11:00 AM - 03:30 PM"),
+        d.get("entry_fee_domestic", "Free"), d.get("entry_fee_foreign", "Free"),
+        d.get("booking_portal_url", "")
+    ))
+    dest_id = cursor.lastrowid
+    dest_id_map[d["name"]] = dest_id
+
+    m = d["metrics"]
+    cursor.execute("""
+        INSERT INTO risk_metrics (
+            destination_id, crime_index, scam_index, weather_risk,
+            health_risk, night_safety, crowd_density, transport_safety
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (dest_id, m["crime_index"], m["scam_index"], m["weather_risk"], m["health_risk"], m["night_safety"], m["crowd_density"], m["transport_safety"]))
+
+    for tip in d.get("tips", []):
+        cursor.execute("""
+            INSERT INTO safety_tips (destination_id, tip_text, category)
+            VALUES (?, ?, 'Local Advice')
+        """, (dest_id, tip))
+
+    for ec in d.get("emergency", []):
+        cursor.execute("""
+            INSERT INTO emergency_contacts (destination_id, facility_name, facility_type, phone, address, lat, lng, is_24_7)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+        """, (dest_id, ec["name"], ec["type"], ec["phone"], ec["address"], ec.get("lat", d["lat"]), ec.get("lng", d["lng"])))
+
+    adv = d.get("advisory")
+    if adv:
+        cursor.execute("""
+            INSERT INTO safety_advisories (destination_id, title, alert_level, summary, issued_by, is_active)
+            VALUES (?, ?, ?, ?, 'Ministry of Tourism / State Police', 1)
+        """, (dest_id, adv["title"], adv["level"], adv["summary"]))
+
+    return dest_id
+
+
 def seed_database(force_refresh: bool = False):
     init_db()
     with get_db() as conn:
@@ -1447,7 +1506,7 @@ def seed_database(force_refresh: bool = False):
         cursor.execute("SELECT COUNT(*) as count FROM destinations WHERE opening_time IS NOT NULL")
         has_operational_fields = cursor.fetchone()["count"]
 
-        if india_dest_count < len(INDIA_DESTINATIONS) or has_operational_fields == 0 or force_refresh:
+        if has_operational_fields == 0 or force_refresh:
             print(f"[SafeTour Bharat] Initializing database with {len(INDIA_DESTINATIONS)} iconic Indian tourist destinations and real-time operational data...")
             cursor.execute("DELETE FROM ground_pulse_votes")
             cursor.execute("DELETE FROM safety_tips")
@@ -1460,55 +1519,7 @@ def seed_database(force_refresh: bool = False):
             dest_id_map = {}
 
             for d in INDIA_DESTINATIONS:
-                cursor.execute("""
-                    INSERT INTO destinations (
-                        name, state, region, country, category, lat, lng,
-                        overall_safety_score, risk_tier, description, image_url,
-                        best_visit_time, dress_code_etiquette, opening_time, closing_time,
-                        weekly_off_day, peak_rush_hours, entry_fee_domestic, entry_fee_foreign, booking_portal_url
-                    ) VALUES (?, ?, ?, 'India', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    d["name"], d["state"], d["region"], d["category"], d["lat"], d["lng"],
-                    d["overall_safety_score"], d["risk_tier"], d["description"], d["image_url"],
-                    d["best_visit_time"], d["dress_code_etiquette"],
-                    d.get("opening_time", "06:00"), d.get("closing_time", "18:30"),
-                    d.get("weekly_off_day", "None"), d.get("peak_rush_hours", "11:00 AM - 03:30 PM"),
-                    d.get("entry_fee_domestic", "Free"), d.get("entry_fee_foreign", "Free"),
-                    d.get("booking_portal_url", "")
-                ))
-                dest_id = cursor.lastrowid
-                dest_id_map[d["name"]] = dest_id
-
-                # Insert Risk Metrics
-                m = d["metrics"]
-                cursor.execute("""
-                    INSERT INTO risk_metrics (
-                        destination_id, crime_index, scam_index, weather_risk,
-                        health_risk, night_safety, crowd_density, transport_safety
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (dest_id, m["crime_index"], m["scam_index"], m["weather_risk"], m["health_risk"], m["night_safety"], m["crowd_density"], m["transport_safety"]))
-
-                # Insert Tips
-                for tip in d.get("tips", []):
-                    cursor.execute("""
-                        INSERT INTO safety_tips (destination_id, tip_text, category)
-                        VALUES (?, ?, 'Local Advice')
-                    """, (dest_id, tip))
-
-                # Insert Emergency Contacts
-                for ec in d.get("emergency", []):
-                    cursor.execute("""
-                        INSERT INTO emergency_contacts (destination_id, facility_name, facility_type, phone, address, lat, lng, is_24_7)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, 1)
-                    """, (dest_id, ec["name"], ec["type"], ec["phone"], ec["address"], ec.get("lat", d["lat"]), ec.get("lng", d["lng"])))
-
-                # Insert Advisory
-                adv = d.get("advisory")
-                if adv:
-                    cursor.execute("""
-                        INSERT INTO safety_advisories (destination_id, title, alert_level, summary, issued_by, is_active)
-                        VALUES (?, ?, ?, ?, 'Ministry of Tourism / State Police', 1)
-                    """, (dest_id, adv["title"], adv["level"], adv["summary"]))
+                _insert_destination_bundle(cursor, d, dest_id_map)
 
             # Seed Real-Time Hazards & Incidents (Landslides, High Tides, Fog, Pilgrim Rush)
             for hz in REAL_TIME_HAZARDS:
@@ -1531,6 +1542,28 @@ def seed_database(force_refresh: bool = False):
                     ))
 
             conn.commit()
+        elif india_dest_count < len(INDIA_DESTINATIONS):
+            # Additive expansion: insert only missing destinations by name (preserve existing data)
+            cursor.execute("SELECT name FROM destinations WHERE country = 'India'")
+            existing = {row["name"] for row in cursor.fetchall()}
+            dest_id_map = {}
+            added = 0
+            for d in INDIA_DESTINATIONS:
+                if d["name"] in existing:
+                    continue
+                _insert_destination_bundle(cursor, d, dest_id_map)
+                added += 1
+            if added:
+                print(f"[SafeTour Bharat] Added {added} new destinations (total seed catalog: {len(INDIA_DESTINATIONS)}).")
+                conn.commit()
+                try:
+                    from app.services.demo_crowd_service import seed_destination_crowd_defaults
+                    seed_destination_crowd_defaults(cursor)
+                    conn.commit()
+                except Exception as e:
+                    print(f"[SafeTour Bharat] Crowd defaults backfill note: {e}")
+            else:
+                print("[SafeTour Bharat] Destination catalog already up to date.")
 
         # Seed Demo Users
         for u in DEMO_USERS:

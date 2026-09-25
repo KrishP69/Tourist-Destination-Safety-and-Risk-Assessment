@@ -1,11 +1,54 @@
 /* Custom Leaflet Map Dark Theme and Radar Styling */
 
+/* Leaflet tile integrity — prevent gray seams / broken tiles on localhost */
 .leaflet-container {
-  background-color: #080c14 !important;
+  width: 100% !important;
+  height: 100%;
+  z-index: 1;
+  background: #0b1220 !important;
   font-family: 'Inter', sans-serif !important;
 }
+/* Critical: any global img max-width rules break Leaflet tile alignment */
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-tile {
+  max-width: none !important;
+  max-height: none !important;
+}
+/* Hide default Leaflet zoom — we use custom float tools */
+body.tourist-mode .leaflet-control-zoom {
+  display: none !important;
+}
+body.tourist-mode .leaflet-control-attribution {
+  background: rgba(15, 23, 42, 0.75) !important;
+  color: #94a3b8 !important;
+  font-size: 10px !important;
+  max-width: 55%;
+  border-radius: 6px 0 0 0;
+}
+body.tourist-mode .leaflet-control-attribution a {
+  color: #7dd3fc !important;
+}
 
-/* Custom Marker Pins */
+/* Dark OSM basemap — dense labels like the original map (2nd screenshot).
+   Filter applies ONLY to the tile layer (.safetour-osm-dark), not markers. */
+.leaflet-layer.safetour-osm-dark,
+.safetour-osm-dark {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(1.05) saturate(0.55) !important;
+}
+.safetour-dark-base,
+.safetour-dark-labels {
+  filter: none !important;
+}
+/* Keep overlays / markers / popups unfiltered */
+.leaflet-overlay-pane,
+.leaflet-marker-pane,
+.leaflet-shadow-pane,
+.leaflet-tooltip-pane,
+.leaflet-popup-pane {
+  filter: none !important;
+}
+
+/* Custom Marker Pins — radar score bubbles matching the dark map */
 .custom-radar-marker {
   position: relative;
   display: flex;
@@ -14,46 +57,60 @@
 }
 
 .marker-shield {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.45), 0 4px 12px rgba(0, 0, 0, 0.55);
   border: 2px solid #fff;
   z-index: 2;
   cursor: pointer;
   transition: transform 0.2s ease;
+  position: relative;
 }
 
 .marker-shield:hover {
-  transform: scale(1.15);
+  transform: scale(1.12);
 }
 
-.marker-shield.safe { background: #10B981; border-color: #6ee7b7; }
-.marker-shield.moderate { background: #F59E0B; border-color: #fde68a; }
-.marker-shield.caution { background: #F97316; border-color: #fed7aa; }
+.marker-shield.safe {
+  background: #10B981;
+  border-color: #6ee7b7;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.55), 0 4px 12px rgba(0, 0, 0, 0.55);
+}
+.marker-shield.moderate {
+  background: #F59E0B;
+  border-color: #fde68a;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.5), 0 4px 12px rgba(0, 0, 0, 0.55);
+}
+.marker-shield.caution {
+  background: #F97316;
+  border-color: #fed7aa;
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.5), 0 4px 12px rgba(0, 0, 0, 0.55);
+}
 
 .marker-pulse-ring {
   position: absolute;
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  animation: radar-ping 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+  animation: radar-ping 2.4s cubic-bezier(0, 0.2, 0.8, 1) infinite;
   z-index: 1;
+  pointer-events: none;
 }
 
-.marker-pulse-ring.safe { border: 2px solid rgba(16, 185, 129, 0.6); }
-.marker-pulse-ring.moderate { border: 2px solid rgba(245, 158, 11, 0.6); }
-.marker-pulse-ring.caution { border: 2px solid rgba(249, 115, 22, 0.6); }
+.marker-pulse-ring.safe { border: 2px solid rgba(16, 185, 129, 0.65); }
+.marker-pulse-ring.moderate { border: 2px solid rgba(245, 158, 11, 0.65); }
+.marker-pulse-ring.caution { border: 2px solid rgba(249, 115, 22, 0.65); }
 
 @keyframes radar-ping {
-  0% { transform: scale(0.6); opacity: 1; }
-  100% { transform: scale(1.8); opacity: 0; }
+  0% { transform: scale(0.55); opacity: 0.95; }
+  100% { transform: scale(1.85); opacity: 0; }
 }
 
 /* Incident marker */

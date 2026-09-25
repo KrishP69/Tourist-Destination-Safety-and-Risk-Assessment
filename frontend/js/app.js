@@ -83,6 +83,7 @@ async function loadOverviewKPIs() {
     document.getElementById("kpiAvgScore").innerText = stats.average_safety_score + " / 100";
     document.getElementById("kpiPulseVotes").innerText = stats.total_ground_pulse_votes || 0;
     document.getElementById("kpiActiveIncidents").innerText = stats.active_incidents || 0;
+    window.dispatchEvent(new CustomEvent("touristDataReady"));
   } catch (err) {
     console.error("Failed to load KPIs:", err);
   }
@@ -109,12 +110,18 @@ async function fetchAndRenderDestinations() {
     renderDestinationsList(allDestinationsData);
     renderDestinationMapPoints(allDestinationsData, selectDestinationById);
     document.getElementById("destCountBadge").innerText = allDestinationsData.length;
+    window.dispatchEvent(new CustomEvent("touristDataReady"));
   } catch (err) {
     console.error("Failed to fetch destinations:", err);
   }
 }
 
 function renderDestinationsList(destinations) {
+  if (window.DestinationsPanel) {
+    DestinationsPanel.render(destinations);
+    return;
+  }
+
   const container = document.getElementById("destinationsGrid");
   if (!container) return;
 
@@ -207,6 +214,24 @@ window.selectDestinationById = async function(destId) {
       MapEngineCrowd.loadHeatmap(destId);
     }
     if (window.LiveStatus) LiveStatus.markFresh();
+
+    // Live risk near this destination (additive — does not alter safety score)
+    try {
+      const riskBox = document.getElementById("detailLiveRiskNear");
+      if (riskBox && dest.lat != null && dest.lng != null) {
+        riskBox.style.display = "none";
+        const rr = await fetch(`/api/risk-events/nearby?lat=${dest.lat}&lng=${dest.lng}&radius_km=60`);
+        const rd = await rr.json();
+        const top = (rd.events || [])[0];
+        if (top) {
+          riskBox.style.display = "block";
+          riskBox.innerHTML = `<strong>⚠ Nearby live risk signal</strong><br>
+            ${String(top.event_type || "").replace(/_/g, " ")} near ${top.location_label}
+            (~${top.distance_km} km) · ${top.risk_level} · confidence ${top.confidence_score}%.<br>
+            <span style="color:#94a3b8;font-size:0.75rem;">News/official detection — not an automatic travel ban.</span>`;
+        }
+      }
+    } catch (_) {}
 
     // Trigger live atmospheric sync in the background
     syncSingleSpotLive(destId, false);

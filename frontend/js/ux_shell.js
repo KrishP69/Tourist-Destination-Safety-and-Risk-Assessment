@@ -233,8 +233,8 @@ const UxShell = {
       el.addEventListener("touchend", cancel);
       el.addEventListener("click", (e) => e.preventDefault());
     };
-    bind(document.getElementById("triggerSosBtn"));
     bind(document.getElementById("mobileBtnSos"));
+    bind(document.getElementById("fabSosBtn"));
   },
 
   syncAdminVisibility() {
@@ -248,12 +248,37 @@ const UxShell = {
 
   bindLocationLabel() {
     const label = document.getElementById("myLocationLabel");
+    const placeEl = document.getElementById("myLocationPlace");
     const btn = document.getElementById("btnAcquireCurrentGPS");
     if (!btn || !label) return;
+
+    const updatePlace = () => {
+      if (!placeEl) return;
+      const pos = window.GeolocationEngine?.currentPosition;
+      if (!pos) {
+        placeEl.textContent = "—";
+        return;
+      }
+      const short =
+        pos.shortName ||
+        (window.GeolocationEngine.toShortPlaceName
+          ? GeolocationEngine.toShortPlaceName(pos.locationName)
+          : pos.locationName) ||
+        `${Number(pos.lat).toFixed(2)}, ${Number(pos.lng).toFixed(2)}`;
+      placeEl.textContent = short;
+      placeEl.title = pos.locationName || short;
+      btn.title = `Location: ${pos.locationName || short}`;
+    };
+
     const update = () => {
       const consent = localStorage.getItem("safetour_location_consent");
       const st = window.LocationPresence?.status;
-      if (st === "active" || st === "granted" || consent === "1") {
+      const hasFix = window.GeolocationEngine?.currentPosition && !window.GeolocationEngine.currentPosition.isSimulated;
+      const simName = window.GeolocationEngine?.currentPosition?.locationName;
+
+      if (st === "active" || st === "granted" || consent === "1" || hasFix) {
+        label.textContent = "Location Active";
+      } else if (window.GeolocationEngine?.currentPosition?.isSimulated && simName) {
         label.textContent = "Location Active";
       } else if (st === "denied") {
         label.textContent = "Enable Location";
@@ -262,11 +287,13 @@ const UxShell = {
       } else {
         label.textContent = "Enable Location";
       }
+      updatePlace();
     };
+
     update();
     setInterval(update, 3000);
+    window.addEventListener("locationUpdated", update);
     btn.addEventListener("click", () => {
-      // Prefer crowd presence consent flow when available
       if (window.LocationPresence) {
         LocationPresence.enable();
       }

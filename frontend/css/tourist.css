@@ -1,0 +1,606 @@
+/* ==========================================================================
+   SafeTour Bharat — Tourist-first UX shell
+   Map-primary, calm, progressive disclosure. Preserves existing dark identity.
+   ========================================================================== */
+
+:root {
+  --st-bg: #0b1220;
+  --st-surface: #111827;
+  --st-card: #151e2e;
+  --st-border: rgba(148, 163, 184, 0.16);
+  --st-text: #f1f5f9;
+  --st-muted: #94a3b8;
+  --st-dim: #64748b;
+  --st-primary: #0ea5e9;
+  --st-safe: #10b981;
+  --st-warn: #f59e0b;
+  --st-danger: #ef4444;
+  --st-radius: 14px;
+  --st-nav-h: 64px;
+  --st-bottom-h: 64px;
+  --st-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+}
+
+/* Calm background — reduce glow clutter */
+body.tourist-mode {
+  background: var(--st-bg);
+  padding-bottom: calc(var(--st-bottom-h) + 12px);
+}
+body.tourist-mode .ambient-glow {
+  opacity: 0.08 !important;
+  filter: blur(160px) !important;
+}
+
+/* Compact premium navbar */
+body.tourist-mode .glass-nav {
+  background: rgba(11, 18, 32, 0.94) !important;
+  border-bottom: 1px solid var(--st-border) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(12px);
+}
+body.tourist-mode .brand-subtitle {
+  display: none;
+}
+body.tourist-mode .ai-badge {
+  background: var(--st-safe) !important;
+  box-shadow: none !important;
+}
+
+/* Hide dense KPI / filter strips by default — progressive disclosure */
+body.tourist-mode .kpi-banner,
+body.tourist-mode .filter-strip {
+  display: none !important;
+}
+
+/* When Explore panel is open, show them inside the panel */
+#exploreDrawerBackdrop.open .kpi-banner,
+#exploreDrawerBackdrop.open .filter-strip {
+  display: grid !important;
+}
+#exploreDrawerBackdrop.open .filter-strip {
+  display: flex !important;
+}
+#exploreDrawer .kpi-banner {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 0;
+  margin: 0 0 12px;
+}
+#exploreDrawer .kpi-card {
+  background: var(--st-card);
+  border: 1px solid var(--st-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: none;
+}
+#exploreDrawer .kpi-icon {
+  width: 32px;
+  height: 32px;
+  font-size: 0.85rem;
+  box-shadow: none;
+}
+#exploreDrawer .filter-strip {
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+  margin: 0 0 12px;
+  overflow: visible;
+}
+#exploreDrawer .filter-group {
+  flex-wrap: wrap;
+}
+
+/* Map-first main layout */
+body.tourist-mode .main-dashboard-grid {
+  display: grid !important;
+  grid-template-columns: 1.4fr 0.9fr;
+  gap: 14px;
+  padding: 12px 14px 0;
+  max-width: 1400px;
+  margin: 0 auto;
+  align-items: start;
+}
+body.tourist-mode .map-wrapper-card { order: 1; }
+body.tourist-mode .inspector-wrapper-card { order: 2; }
+
+body.tourist-mode .map-wrapper-card {
+  position: relative;
+  background: var(--st-surface);
+  border: 1px solid var(--st-border);
+  border-radius: var(--st-radius);
+  box-shadow: var(--st-shadow);
+  overflow: hidden;
+  min-height: calc(100vh - var(--st-nav-h) - 180px);
+  display: flex;
+  flex-direction: column;
+}
+
+body.tourist-mode .map-controls-header {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 500;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid var(--st-border);
+  border-radius: 12px;
+  padding: 8px 10px;
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+body.tourist-mode .map-title-box {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--st-text);
+}
+body.tourist-mode .map-title-box .live-pulse-badge,
+body.tourist-mode .live-pulse-badge {
+  display: none;
+}
+
+body.tourist-mode .interactive-leaflet-map {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 520px !important;
+  height: calc(100vh - var(--st-nav-h) - 160px) !important;
+  border-radius: 0;
+  position: relative;
+  z-index: 1;
+  background: #0b1220;
+}
+/* Prevent parent transforms from breaking tile alignment */
+body.tourist-mode .map-wrapper-card,
+body.tourist-mode .interactive-leaflet-map,
+body.tourist-mode .leaflet-container {
+  transform: none !important;
+  filter: none !important;
+  perspective: none !important;
+}
+
+body.tourist-mode .map-legend {
+  position: absolute;
+  bottom: 14px;
+  left: 12px;
+  z-index: 500;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid var(--st-border);
+  border-radius: 10px;
+  padding: 6px 10px;
+  margin: 0;
+  gap: 8px;
+  font-size: 0.68rem;
+}
+
+/* Desktop primary text links */
+.tourist-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: 8px;
+}
+.tourist-nav-links .nav-text-link {
+  border: none;
+  background: transparent;
+  color: var(--st-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: Inter, sans-serif;
+  white-space: nowrap;
+}
+.tourist-nav-links .nav-text-link:hover,
+.tourist-nav-links .nav-text-link:focus-visible {
+  color: var(--st-text);
+  background: rgba(148, 163, 184, 0.1);
+  outline: none;
+}
+.tourist-nav-links .nav-text-link.active {
+  color: var(--st-primary);
+  background: rgba(14, 165, 233, 0.12);
+}
+
+body.tourist-mode .nav-center {
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+/* Layers popover hosts full toggles */
+.layers-popover .map-layer-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.layers-popover .layer-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 0.76rem;
+  color: var(--st-text);
+}
+
+@media (max-width: 1200px) {
+  .tourist-nav-links {
+    display: none;
+  }
+}
+
+/* Floating map tools */
+.map-float-tools {
+  position: absolute;
+  right: 12px;
+  bottom: 70px;
+  z-index: 520;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.map-float-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--st-border);
+  background: rgba(15, 23, 42, 0.94);
+  color: var(--st-text);
+  cursor: pointer;
+  box-shadow: var(--st-shadow);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+.map-float-btn:hover,
+.map-float-btn:focus-visible {
+  border-color: rgba(14, 165, 233, 0.5);
+  outline: none;
+}
+
+/* Safety snapshot strip under map on mobile / beside on desktop */
+.tourist-snapshot-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 0;
+  grid-column: 1 / -1;
+  order: 3;
+}
+.snapshot-card {
+  background: var(--st-card);
+  border: 1px solid var(--st-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.snapshot-card h4 {
+  margin: 0 0 6px;
+  font-family: var(--font-heading), Outfit, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--st-text);
+}
+.snapshot-card p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--st-muted);
+  line-height: 1.4;
+}
+.snapshot-metric {
+  font-family: Outfit, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--st-text);
+  margin: 4px 0;
+}
+.snapshot-metric.safe { color: var(--st-safe); }
+.snapshot-metric.warn { color: var(--st-warn); }
+.snapshot-metric.danger { color: var(--st-danger); }
+.snapshot-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.snapshot-list li {
+  font-size: 0.74rem;
+  color: var(--st-muted);
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(148,163,184,0.1);
+}
+.snapshot-list li:last-child { border-bottom: none; }
+.snapshot-list strong { color: var(--st-text); font-weight: 600; }
+.snapshot-empty {
+  font-size: 0.74rem;
+  color: var(--st-dim);
+  padding: 6px 0;
+}
+
+/* Inspector panel — cleaner */
+body.tourist-mode .inspector-wrapper-card {
+  background: var(--st-surface);
+  border: 1px solid var(--st-border);
+  border-radius: var(--st-radius);
+  box-shadow: var(--st-shadow);
+  height: calc(100vh - var(--st-nav-h) - 90px);
+  max-height: calc(100vh - var(--st-nav-h) - 90px);
+  overflow: hidden;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+body.tourist-mode .destinations-main-title,
+body.tourist-mode .view-header h3 {
+  font-size: 0.95rem !important;
+}
+body.tourist-mode .destination-card {
+  border-radius: 12px;
+  border: 1px solid var(--st-border);
+  box-shadow: none;
+}
+
+/* Compact incident feed */
+body.tourist-mode .incident-ticker-section {
+  max-width: 1400px;
+  margin: 14px auto 0;
+  padding: 0 14px;
+  background: transparent;
+  border: none;
+}
+body.tourist-mode .ticker-header {
+  background: var(--st-card);
+  border: 1px solid var(--st-border);
+  border-radius: 12px 12px 0 0;
+  padding: 10px 14px;
+}
+body.tourist-mode .ticker-title span:last-child {
+  font-size: 0.78rem;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 600;
+}
+body.tourist-mode .incident-feed-slider {
+  background: var(--st-surface);
+  border: 1px solid var(--st-border);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 10px;
+}
+
+/* Floating SOS — reachable, not accidental (press-hold still required) */
+.fab-sos {
+  position: fixed;
+  right: 18px;
+  bottom: calc(var(--st-bottom-h) + 18px);
+  z-index: 1400;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid rgba(239, 68, 68, 0.55);
+  background: #7f1d1d;
+  color: #fecaca;
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(127, 29, 29, 0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.fab-sos i { font-size: 1.1rem; color: #fecaca; }
+.fab-sos.holding {
+  background: #ef4444;
+  color: #fff;
+  border-color: #fff;
+  transform: scale(1.05);
+}
+.fab-sos-hint {
+  position: fixed;
+  right: 18px;
+  bottom: calc(var(--st-bottom-h) + 90px);
+  z-index: 1399;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid var(--st-border);
+  color: var(--st-muted);
+  font-size: 0.68rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.fab-sos:focus-visible + .fab-sos-hint,
+.fab-sos:hover + .fab-sos-hint {
+  opacity: 1;
+}
+
+/* Bottom navigation (mobile / always helpful) */
+.tourist-bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1300;
+  height: var(--st-bottom-h);
+  background: rgba(11, 18, 32, 0.96);
+  border-top: 1px solid var(--st-border);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 0 6px env(safe-area-inset-bottom);
+  backdrop-filter: blur(12px);
+}
+.tourist-bottom-nav button {
+  border: none;
+  background: transparent;
+  color: var(--st-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  font-family: Inter, sans-serif;
+}
+.tourist-bottom-nav button i { font-size: 1.05rem; }
+.tourist-bottom-nav button.active,
+.tourist-bottom-nav button:hover {
+  color: var(--st-primary);
+}
+
+/* Explore drawer (progressive disclosure of filters/KPIs) */
+.explore-drawer-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  background: rgba(2, 6, 23, 0.55);
+}
+.explore-drawer-backdrop.open { display: block; }
+.explore-drawer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: min(420px, 94vw);
+  background: var(--st-bg);
+  border-left: 1px solid var(--st-border);
+  padding: 16px;
+  overflow: auto;
+  box-shadow: var(--st-shadow);
+}
+.explore-drawer h3 {
+  margin: 0 0 4px;
+  font-family: Outfit, sans-serif;
+  font-size: 1.05rem;
+}
+.explore-drawer .muted {
+  color: var(--st-muted);
+  font-size: 0.78rem;
+  margin-bottom: 14px;
+}
+
+/* Layers popover on map */
+.layers-popover {
+  display: none;
+  position: absolute;
+  right: 60px;
+  bottom: 70px;
+  z-index: 530;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid var(--st-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  min-width: 180px;
+  box-shadow: var(--st-shadow);
+}
+.layers-popover.open { display: block; }
+.layers-popover label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: var(--st-text);
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+/* Tone down card chrome in destination detail */
+body.tourist-mode .crowd-intel-card,
+body.tourist-mode .best-time-card,
+body.tourist-mode .forecast-card,
+body.tourist-mode .smart-booking-card,
+body.tourist-mode .insight-card,
+body.tourist-mode .consensus-card,
+body.tourist-mode .operations-card,
+body.tourist-mode .dest-hero-card {
+  box-shadow: none;
+  border-color: var(--st-border);
+}
+
+/* Desktop: bottom nav optional slim; keep FAB */
+@media (min-width: 1024px) {
+  body.tourist-mode {
+    padding-bottom: 16px;
+  }
+  .tourist-bottom-nav {
+    display: none;
+  }
+  .fab-sos {
+    bottom: 24px;
+    right: 24px;
+  }
+  .fab-sos-hint {
+    bottom: 96px;
+    right: 24px;
+  }
+  body.tourist-mode .main-dashboard-grid {
+    grid-template-columns: 1.55fr 0.85fr;
+  }
+}
+
+@media (max-width: 1023px) {
+  body.tourist-mode .main-dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+  body.tourist-mode .map-wrapper-card {
+    min-height: 48vh;
+  }
+  body.tourist-mode .interactive-leaflet-map {
+    height: 48vh !important;
+    min-height: 280px !important;
+  }
+  body.tourist-mode .inspector-wrapper-card {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+  body.tourist-mode #destListPanel.dest-list-panel {
+    overflow: visible !important;
+    max-height: none;
+  }
+  .tourist-snapshot-row {
+    grid-template-columns: 1fr;
+  }
+  body.tourist-mode .map-controls-header {
+    position: relative;
+    top: 0;
+    left: 0;
+    right: 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+  }
+  body.tourist-mode .map-legend {
+    bottom: 12px;
+  }
+  body.tourist-mode .nav-right .hide-mobile {
+    display: none !important;
+  }
+}
+
+/* Reduce decorative pulse on markers slightly for calmer map */
+body.tourist-mode .marker-pulse-ring {
+  animation-duration: 2.4s;
+  opacity: 0.9;
+}
+body.tourist-mode .incident-marker-icon {
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.45);
+}
