@@ -1098,6 +1098,10 @@
         <div style="margin-top: 10px; font-size: 0.75rem; color: #94a3b8;">
           Home City: <strong id="profileUserCity" style="color: #cbd5e1;">India</strong>
         </div>
+        <div style="margin-top: 6px; font-size: 0.75rem; color: #94a3b8;">
+          Personalized for: <strong id="profileUserPrefs" style="color: #38bdf8;">Not set</strong>
+          <button type="button" onclick="AuthService.openPersonalizationModal(); document.getElementById('profileModal').classList.remove('active');" style="background:none; border:none; color:#60a5fa; cursor:pointer; font-size:0.75rem; text-decoration:underline; margin-left:6px;">Change</button>
+        </div>
       </div>
 
       <div style="display: flex; gap: 10px;">
@@ -1108,6 +1112,124 @@
           Done
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Personalize Destinations (Age & Taste of Visit) -->
+  <div id="personalizationModal" class="pulse-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="personalizeModalTitle">
+    <div class="pulse-modal-container" style="max-width: 520px; padding: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+        <div>
+          <span style="font-size: 0.72rem; color: #38bdf8; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Travel Intelligence
+          </span>
+          <h3 id="personalizeModalTitle" style="font-size: 1.25rem; color: #f8fafc; margin: 2px 0 4px;">Personalize Your Destinations</h3>
+          <p style="font-size: 0.78rem; color: #94a3b8; margin: 0;">Help SafeTour Bharat tailor destination safety and experiences for you.</p>
+        </div>
+        <button class="pulse-modal-close" onclick="AuthService.closePersonalizationModal()" aria-label="Close">&times;</button>
+      </div>
+
+      <form id="personalizationForm" onsubmit="handlePersonalizationSubmit(event)">
+        <!-- Question 1: Age Group -->
+        <div class="mcq-group" style="margin-bottom: 16px;">
+          <label class="mcq-title"><i class="fa-solid fa-user-clock" style="color:#38bdf8;"></i> 1. What is your age group?</label>
+          <div class="mcq-options-grid">
+            <label class="mcq-option-card">
+              <input type="radio" name="pref_age_group" value="18-25" checked required>
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">🎒</span>
+                <span class="mcq-option-text">18 - 25<br><span style="font-size: 0.65rem; color: #94a3b8; font-weight: 400;">Youth & Explorer</span></span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="pref_age_group" value="26-45">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">🧳</span>
+                <span class="mcq-option-text">26 - 45<br><span style="font-size: 0.65rem; color: #94a3b8; font-weight: 400;">Adult & Vacationer</span></span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="pref_age_group" value="46-60">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">🧘</span>
+                <span class="mcq-option-text">46 - 60<br><span style="font-size: 0.65rem; color: #94a3b8; font-weight: 400;">Mature Traveler</span></span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="pref_age_group" value="60+">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">🕊️</span>
+                <span class="mcq-option-text">60+<br><span style="font-size: 0.65rem; color: #94a3b8; font-weight: 400;">Senior Traveler</span></span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Question 2: Taste of Visit -->
+        <div class="mcq-group" style="margin-bottom: 20px;">
+          <label class="mcq-title"><i class="fa-solid fa-compass" style="color:#10b981;"></i> 2. What is your preferred taste of visit?</label>
+          <div class="mcq-options-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+            <label class="mcq-option-card">
+              <input type="radio" name="pref_travel_taste" value="Heritage & Forts" checked required>
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">🏰</span>
+                <span class="mcq-option-text">Heritage & Forts</span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="pref_travel_taste" value="Spiritual & Sacred">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">🛕</span>
+                <span class="mcq-option-text">Spiritual & Sacred</span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="pref_travel_taste" value="Mountain & Adventure">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">⛰️</span>
+                <span class="mcq-option-text">Mountain & Hills</span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="pref_travel_taste" value="Beach & Coastal">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">🏖️</span>
+                <span class="mcq-option-text">Beach & Coastal</span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="pref_travel_taste" value="Wildlife & Nature">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">🐅</span>
+                <span class="mcq-option-text">Wildlife & Nature</span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="pref_travel_taste" value="Urban & Culture">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">🏙️</span>
+                <span class="mcq-option-text">Urban & Culture</span>
+              </div>
+            </label>
+            <label class="mcq-option-card">
+              <input type="radio" name="pref_travel_taste" value="All Categories">
+              <div class="mcq-option-body">
+                <span class="mcq-option-icon">🌟</span>
+                <span class="mcq-option-text">All Diverse</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn btn-secondary" onclick="AuthService.closePersonalizationModal()" style="flex:1;">
+            Skip for now
+          </button>
+          <button type="submit" class="btn btn-primary" style="flex:2; background: linear-gradient(135deg, #0284c7, #0369a1); font-weight:700;">
+            <i class="fa-solid fa-check"></i> Save & Personalize
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1324,6 +1446,50 @@
       }
     }
 
+    function handlePersonalizationSubmit(e) {
+      e.preventDefault();
+      const form = e.target;
+      const ageGroup = form.elements['pref_age_group']?.value || '26-45';
+      const taste = form.elements['pref_travel_taste']?.value || 'All Categories';
+
+      AuthService.setPreferences({
+        age_group: ageGroup,
+        travel_taste: taste
+      });
+
+      AuthService.closePersonalizationModal();
+      if (typeof showLiveToast === 'function') {
+        showLiveToast('Personalized feed applied for ' + taste + ' (' + ageGroup + ')');
+      }
+    }
+
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim();
+      const pass = document.getElementById('loginPassword').value;
+      const errBox = document.getElementById('loginErrorBox');
+      const btn = document.getElementById('btnLoginSubmit');
+      
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...';
+      errBox.classList.add('hidden');
+      errBox.textContent = '';
+      
+      try {
+        await AuthService.login(email, pass);
+        AuthService.closeAuthModal();
+        if (!AuthService.hasPreferences()) {
+          setTimeout(() => AuthService.openPersonalizationModal(), 350);
+        }
+      } catch (err) {
+        errBox.textContent = err.message || 'Login failed.';
+        errBox.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Sign In to SafeTour';
+      }
+    }
+
     async function handleRegisterSubmit(e) {
       e.preventDefault();
       const name = document.getElementById('regFullName').value.trim();
@@ -1341,6 +1507,9 @@
       try {
         await AuthService.register(name, email, pass, city);
         AuthService.closeAuthModal();
+        if (!AuthService.hasPreferences()) {
+          setTimeout(() => AuthService.openPersonalizationModal(), 350);
+        }
       } catch (err) {
         errBox.textContent = err.message || 'Registration failed.';
         errBox.classList.remove('hidden');
@@ -1354,6 +1523,9 @@
       try {
         await AuthService.login(email, 'Traveler@123');
         AuthService.closeAuthModal();
+        if (!AuthService.hasPreferences()) {
+          setTimeout(() => AuthService.openPersonalizationModal(), 350);
+        }
       } catch (err) {
         alert(err.message || 'Demo login failed');
       }
@@ -1362,16 +1534,24 @@
     // Modal dismiss on backdrop click and Escape key
     document.addEventListener('DOMContentLoaded', function () {
       const authModal = document.getElementById('authModal');
+      const persModal = document.getElementById('personalizationModal');
+
       if (authModal) {
         authModal.addEventListener('click', function (e) {
           if (e.target === authModal) AuthService.closeAuthModal();
         });
-        document.addEventListener('keydown', function (e) {
-          if (e.key === 'Escape' && authModal.classList.contains('active')) {
-            AuthService.closeAuthModal();
-          }
+      }
+      if (persModal) {
+        persModal.addEventListener('click', function (e) {
+          if (e.target === persModal) AuthService.closePersonalizationModal();
         });
       }
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          if (authModal?.classList.contains('active')) AuthService.closeAuthModal();
+          if (persModal?.classList.contains('active')) AuthService.closePersonalizationModal();
+        }
+      });
     });
   </script>
 </body>

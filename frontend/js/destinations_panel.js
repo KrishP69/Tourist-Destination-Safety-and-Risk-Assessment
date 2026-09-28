@@ -58,6 +58,14 @@ const DestinationsPanel = {
       if (source?.length) this.render(source);
     });
 
+    window.addEventListener("preferencesChanged", () => {
+      const source =
+        typeof allDestinationsData !== "undefined" && allDestinationsData.length
+          ? allDestinationsData
+          : this._lastDests;
+      if (source?.length) this.render(source);
+    });
+
     this.updateLocationBanner();
   },
 
@@ -297,6 +305,11 @@ const DestinationsPanel = {
             <span>${hours}</span>
           </p>
           <div class="dest-modern-footer">
+            ${
+              dest.is_personalized_match
+                ? `<span class="dest-chip personalized-chip" style="background:rgba(56,189,248,0.18);color:#38bdf8;border:1px solid rgba(56,189,248,0.35);font-size:0.68rem;padding:2px 7px;border-radius:12px;font-weight:600;"><i class="fa-solid fa-sparkles"></i> For You</span>`
+                : ""
+            }
             ${alert}
             <span class="dest-view-link">View details <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
           </div>

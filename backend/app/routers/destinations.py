@@ -79,7 +79,9 @@ def get_destinations(
     category: Optional[str] = None,
     region: Optional[str] = None,
     user_lat: Optional[float] = None,
-    user_lon: Optional[float] = None
+    user_lon: Optional[float] = None,
+    taste: Optional[str] = None,
+    age_group: Optional[str] = None
 ):
     with get_db() as conn:
         cursor = conn.cursor()
@@ -161,10 +163,51 @@ def get_destinations(
             dest_dict["is_currently_open"] = is_open
             dest_dict["open_status_text"] = status_text
 
+            # Personalization scoring based on age group and taste
+            personalization_score = 0
+            is_matched = False
+            cat = (dest_dict.get("category") or "").strip()
+            score = dest_dict.get("overall_safety_score", 85)
+
+            if taste and taste not in ["All", "All Categories"]:
+                if cat.lower() == taste.strip().lower():
+                    personalization_score += 50
+                    is_matched = True
+
+            if age_group:
+                ag = age_group.lower().strip()
+                if "18-25" in ag or "youth" in ag:
+                    if cat in ["Mountain & Adventure", "Beach & Coastal", "Urban & Culture"]:
+                        personalization_score += 25
+                        is_matched = True
+                elif "26-45" in ag or "adult" in ag:
+                    if cat in ["Heritage & Forts", "Wildlife & Nature", "Beach & Coastal"]:
+                        personalization_score += 20
+                        is_matched = True
+                elif "46-60" in ag or "mature" in ag:
+                    if cat in ["Heritage & Forts", "Spiritual & Sacred", "Wildlife & Nature"]:
+                        personalization_score += 25
+                        if score >= 80:
+                            personalization_score += 15
+                        is_matched = True
+                elif "60+" in ag or "senior" in ag:
+                    if cat in ["Spiritual & Sacred", "Heritage & Forts"]:
+                        personalization_score += 35
+                    if score >= 85:
+                        personalization_score += 25
+                    if cat in ["Spiritual & Sacred", "Heritage & Forts"] or score >= 85:
+                        is_matched = True
+
+            dest_dict["personalization_score"] = personalization_score
+            dest_dict["is_personalized_match"] = is_matched
+
             # Attach active hazards
             dest_dict["nearby_incidents"] = incidents_by_dest.get(dest_dict["id"], [])
             
             results.append(dest_dict)
+
+        if (taste and taste not in ["All", "All Categories"]) or age_group:
+            results.sort(key=lambda d: (-d.get("personalization_score", 0), -d.get("overall_safety_score", 0)))
             
         return results
 

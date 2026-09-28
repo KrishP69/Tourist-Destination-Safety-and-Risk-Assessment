@@ -44,6 +44,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // Listen for Personalization changes (age & taste of visit)
+  window.addEventListener('preferencesChanged', async () => {
+    await fetchAndRenderDestinations();
+  });
+
   // Background real-time polling (every 30 seconds)
   setInterval(() => {
     loadOverviewKPIs();
@@ -102,6 +107,15 @@ async function fetchAndRenderDestinations() {
   if (pos && pos.lat && pos.lng) {
     url.searchParams.set("user_lat", pos.lat);
     url.searchParams.set("user_lon", pos.lng);
+  }
+
+  // Personalization preferences (age & taste of visit)
+  const prefs = window.AuthService?.getPreferences?.();
+  if (prefs?.travel_taste && prefs.travel_taste !== "All" && prefs.travel_taste !== "All Categories") {
+    url.searchParams.set("taste", prefs.travel_taste);
+  }
+  if (prefs?.age_group) {
+    url.searchParams.set("age_group", prefs.age_group);
   }
 
   try {

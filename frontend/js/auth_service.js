@@ -170,7 +170,57 @@ const AuthService = {
     document.getElementById('profileUserBadge').textContent = user.reputation_badge || 'Verified Explorer';
     document.getElementById('profileUserXP').textContent = `${user.reputation_xp || 100} XP`;
     document.getElementById('profileUserCity').textContent = user.home_city || 'India';
+    const prefs = this.getPreferences();
+    const prefsEl = document.getElementById('profileUserPrefs');
+    if (prefsEl) {
+      if (prefs && (prefs.travel_taste || prefs.age_group)) {
+        prefsEl.textContent = `${prefs.travel_taste || 'All'} (${prefs.age_group || 'All ages'})`;
+      } else {
+        prefsEl.textContent = 'Not set';
+      }
+    }
     modal.classList.add('active');
+  },
+
+  PREFS_KEY: 'safetour_user_preferences',
+
+  getPreferences() {
+    try {
+      const data = localStorage.getItem(this.PREFS_KEY);
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  hasPreferences() {
+    const p = this.getPreferences();
+    return !!(p && (p.age_group || p.travel_taste));
+  },
+
+  setPreferences(prefs) {
+    localStorage.setItem(this.PREFS_KEY, JSON.stringify(prefs));
+    window.dispatchEvent(new CustomEvent('preferencesChanged', { detail: prefs }));
+  },
+
+  openPersonalizationModal() {
+    const modal = document.getElementById('personalizationModal');
+    if (!modal) return;
+    const current = this.getPreferences() || {};
+    if (current.age_group) {
+      const radio = modal.querySelector(`input[name="pref_age_group"][value="${current.age_group}"]`);
+      if (radio) radio.checked = true;
+    }
+    if (current.travel_taste) {
+      const radio = modal.querySelector(`input[name="pref_travel_taste"][value="${current.travel_taste}"]`);
+      if (radio) radio.checked = true;
+    }
+    modal.classList.add('active');
+  },
+
+  closePersonalizationModal() {
+    const modal = document.getElementById('personalizationModal');
+    if (modal) modal.classList.remove('active');
   }
 };
 
