@@ -1241,3 +1241,5 @@ body {
 .admin-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); }
 .btn-action-small { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-subtle); color: #fff; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; margin-right: 4px; }
 .btn-action-small:hover { background: var(--primary-accent); }
+
+.hidden { display: none !important; }

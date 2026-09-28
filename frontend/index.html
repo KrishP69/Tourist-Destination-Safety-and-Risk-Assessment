@@ -1005,203 +1005,75 @@
     </div>
   </div>
 
-  <!-- MODAL: User Auth (Sign In / Register) — Improved -->
-  <div id="authModal" class="pulse-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
-    <div class="pulse-modal-container" style="max-width: 460px; padding: 28px;">
-
-      <!-- Header -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-        <div>
-          <h3 id="authModalTitle" style="font-size:1.25rem;color:#f8fafc;margin:0;display:flex;align-items:center;gap:8px;">
-            <i class="fa-solid fa-user-shield" style="color:#38bdf8;"></i> SafeTour Bharat
-          </h3>
-          <p style="font-size:0.72rem;color:#64748b;margin:3px 0 0;">Secure your travel with India's safety network</p>
-        </div>
-        <button class="pulse-modal-close" onclick="AuthService.closeAuthModal()" aria-label="Close">&times;</button>
+  <!-- MODAL: User Auth (Sign In / Register) -->
+  <div id="authModal" class="pulse-modal-backdrop">
+    <div class="pulse-modal-container" style="max-width: 440px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.2rem; color: #f8fafc; margin: 0;"><i class="fa-solid fa-user-shield" style="color:#38bdf8;"></i> SafeTour Bharat Account</h3>
+        <button class="pulse-modal-close" onclick="AuthService.closeAuthModal()">&times;</button>
       </div>
 
-      <!-- Tab Switcher -->
-      <div class="auth-tabs" style="display:flex;gap:0;border:1px solid rgba(255,255,255,0.12);border-radius:10px;overflow:hidden;margin-bottom:20px;">
-        <button id="tabBtnLogin" class="auth-tab-btn active" onclick="AuthService.switchAuthTab('login')"
-          style="flex:1;padding:10px;border:none;border-radius:0;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.2s;">
-          <i class="fa-solid fa-right-to-bracket"></i> Sign In
-        </button>
-        <button id="tabBtnRegister" class="auth-tab-btn" onclick="AuthService.switchAuthTab('register')"
-          style="flex:1;padding:10px;border:none;border-radius:0;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.2s;">
-          <i class="fa-solid fa-user-plus"></i> Create Account
-        </button>
+      <div class="auth-tabs">
+        <button id="tabBtnLogin" class="auth-tab-btn active" onclick="AuthService.switchAuthTab('login')">Sign In</button>
+        <button id="tabBtnRegister" class="auth-tab-btn" onclick="AuthService.switchAuthTab('register')">Create Account</button>
       </div>
 
-      <!-- Demo Login Helpers -->
-      <div style="background:rgba(56,189,248,0.07);border:1px solid rgba(56,189,248,0.18);border-radius:10px;padding:12px 14px;margin-bottom:20px;">
-        <div style="font-size:0.7rem;color:#38bdf8;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">
-          <i class="fa-solid fa-bolt" style="margin-right:4px;"></i> Quick Demo — 1-click Login
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button type="button" onclick="demoLogin('arjun@traveler.in')"
-            style="flex:1;background:rgba(30,41,59,0.9);border:1px solid rgba(255,255,255,0.1);color:#f8fafc;
-                   font-size:0.72rem;padding:8px 6px;border-radius:8px;cursor:pointer;">
-            <i class="fa-solid fa-crown" style="color:#f59e0b;"></i> Arjun <span style="color:#64748b;">(1150 XP)</span>
+      <!-- Quick Demo Login Helpers -->
+      <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 10px; padding: 10px; margin-bottom: 16px;">
+        <span style="font-size: 0.72rem; color: #38bdf8; font-weight: 700; text-transform: uppercase;">⚡ Quick 1-Click Demo Profiles:</span>
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
+          <button type="button" class="btn btn-sm" onclick="demoLogin('arjun@traveler.in')" style="flex:1; background: rgba(30,41,59,0.9); border: 1px solid rgba(255,255,255,0.1); color: #f8fafc; font-size: 0.72rem; padding: 6px;">
+            Arjun (Master 1150 XP)
           </button>
-          <button type="button" onclick="demoLogin('priya@traveler.in')"
-            style="flex:1;background:rgba(30,41,59,0.9);border:1px solid rgba(255,255,255,0.1);color:#f8fafc;
-                   font-size:0.72rem;padding:8px 6px;border-radius:8px;cursor:pointer;">
-            <i class="fa-solid fa-shield" style="color:#10b981;"></i> Priya <span style="color:#64748b;">(650 XP)</span>
+          <button type="button" class="btn btn-sm" onclick="demoLogin('priya@traveler.in')" style="flex:1; background: rgba(30,41,59,0.9); border: 1px solid rgba(255,255,255,0.1); color: #f8fafc; font-size: 0.72rem; padding: 6px;">
+            Priya (Guardian 650 XP)
           </button>
         </div>
       </div>
 
       <!-- Login Form -->
       <div id="loginFormContainer">
-        <form onsubmit="handleLoginSubmit(event)" novalidate>
-
-          <div style="margin-bottom:14px;">
-            <label for="loginEmail" style="font-size:0.78rem;color:#94a3b8;display:block;margin-bottom:5px;font-weight:500;">
-              <i class="fa-solid fa-envelope" style="margin-right:4px;"></i> Email Address
-            </label>
-            <input type="email" id="loginEmail" autocomplete="email" placeholder="you@example.com" required
-              class="form-control"
-              style="width:100%;padding:11px 14px;background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.12);
-                     border-radius:9px;color:#f8fafc;font-size:0.88rem;outline:none;transition:border-color 0.2s;"
-              onfocus="this.style.borderColor='rgba(56,189,248,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'">
+        <form onsubmit="handleLoginSubmit(event)">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px;">Email Address</label>
+            <input type="email" id="loginEmail" placeholder="e.g. arjun@traveler.in" required class="form-control" style="background: rgba(30,41,59,0.7); border-color: rgba(255,255,255,0.1); color: #fff;">
           </div>
-
-          <div style="margin-bottom:16px;">
-            <label for="loginPassword" style="font-size:0.78rem;color:#94a3b8;display:block;margin-bottom:5px;font-weight:500;">
-              <i class="fa-solid fa-lock" style="margin-right:4px;"></i> Password
-            </label>
-            <div style="position:relative;">
-              <input type="password" id="loginPassword" autocomplete="current-password" placeholder="••••••••" required
-                class="form-control"
-                style="width:100%;padding:11px 42px 11px 14px;background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.12);
-                       border-radius:9px;color:#f8fafc;font-size:0.88rem;outline:none;transition:border-color 0.2s;"
-                onfocus="this.style.borderColor='rgba(56,189,248,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'">
-              <button type="button" onclick="togglePasswordVisibility('loginPassword','eyeIconLogin')"
-                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;
-                       cursor:pointer;color:#64748b;padding:0;font-size:0.85rem;" aria-label="Toggle password visibility">
-                <i class="fa-solid fa-eye" id="eyeIconLogin"></i>
-              </button>
-            </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px;">Password</label>
+            <input type="password" id="loginPassword" placeholder="••••••••" required class="form-control" style="background: rgba(30,41,59,0.7); border-color: rgba(255,255,255,0.1); color: #fff;">
           </div>
-
-          <div id="loginErrorBox" class="hidden"
-            style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);
-                   border-radius:8px;padding:10px 12px;color:#fca5a5;font-size:0.8rem;margin-bottom:12px;">
-          </div>
-
-          <button type="submit" id="btnLoginSubmit" class="btn btn-primary"
-            style="width:100%;padding:12px;font-weight:700;font-size:0.92rem;border-radius:10px;
-                   background:linear-gradient(135deg,#3b82f6,#6366f1);border:none;cursor:pointer;
-                   box-shadow:0 4px 15px rgba(99,102,241,0.35);">
-            <i class="fa-solid fa-right-to-bracket"></i> Sign In to SafeTour
+          <div id="loginErrorBox" class="hidden" style="color: #fca5a5; font-size: 0.8rem; margin-bottom: 10px;"></div>
+          <button type="submit" id="btnLoginSubmit" class="btn btn-primary" style="width: 100%; padding: 10px; font-weight: 700;">
+            Sign In to SafeTour
           </button>
-
-          <p style="text-align:center;margin-top:14px;font-size:0.75rem;color:#64748b;">
-            No account?
-            <button type="button" onclick="AuthService.switchAuthTab('register')"
-              style="background:none;border:none;color:#38bdf8;cursor:pointer;font-size:0.75rem;padding:0;">
-              Create one for free →
-            </button>
-          </p>
         </form>
       </div>
 
       <!-- Register Form -->
       <div id="registerFormContainer" class="hidden">
-        <form onsubmit="handleRegisterSubmit(event)" novalidate>
-
-          <div style="margin-bottom:12px;">
-            <label for="regFullName" style="font-size:0.78rem;color:#94a3b8;display:block;margin-bottom:5px;font-weight:500;">
-              <i class="fa-solid fa-id-card" style="margin-right:4px;"></i> Full Name *
-            </label>
-            <input type="text" id="regFullName" autocomplete="name" placeholder="e.g. Rahul Sen" required
-              class="form-control"
-              style="width:100%;padding:11px 14px;background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.12);
-                     border-radius:9px;color:#f8fafc;font-size:0.88rem;outline:none;transition:border-color 0.2s;"
-              onfocus="this.style.borderColor='rgba(56,189,248,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'">
+        <form onsubmit="handleRegisterSubmit(event)">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px;">Full Name *</label>
+            <input type="text" id="regFullName" placeholder="e.g. Rahul Sen" required class="form-control" style="background: rgba(30,41,59,0.7); border-color: rgba(255,255,255,0.1); color: #fff;">
           </div>
-
-          <div style="margin-bottom:12px;">
-            <label for="regEmail" style="font-size:0.78rem;color:#94a3b8;display:block;margin-bottom:5px;font-weight:500;">
-              <i class="fa-solid fa-envelope" style="margin-right:4px;"></i> Email Address *
-            </label>
-            <input type="email" id="regEmail" autocomplete="email" placeholder="you@example.in" required
-              class="form-control"
-              style="width:100%;padding:11px 14px;background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.12);
-                     border-radius:9px;color:#f8fafc;font-size:0.88rem;outline:none;transition:border-color 0.2s;"
-              onfocus="this.style.borderColor='rgba(56,189,248,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px;">Email Address *</label>
+            <input type="email" id="regEmail" placeholder="e.g. rahul@traveler.in" required class="form-control" style="background: rgba(30,41,59,0.7); border-color: rgba(255,255,255,0.1); color: #fff;">
           </div>
-
-          <div style="margin-bottom:12px;">
-            <label for="regHomeCity" style="font-size:0.78rem;color:#94a3b8;display:block;margin-bottom:5px;font-weight:500;">
-              <i class="fa-solid fa-city" style="margin-right:4px;"></i> Home City
-            </label>
-            <input type="text" id="regHomeCity" autocomplete="address-level2" placeholder="e.g. Jaipur, Rajasthan"
-              class="form-control"
-              style="width:100%;padding:11px 14px;background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.12);
-                     border-radius:9px;color:#f8fafc;font-size:0.88rem;outline:none;transition:border-color 0.2s;"
-              onfocus="this.style.borderColor='rgba(56,189,248,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px;">Home City (India)</label>
+            <input type="text" id="regHomeCity" placeholder="e.g. Jaipur, Rajasthan" class="form-control" style="background: rgba(30,41,59,0.7); border-color: rgba(255,255,255,0.1); color: #fff;">
           </div>
-
-          <div style="margin-bottom:8px;">
-            <label for="regPassword" style="font-size:0.78rem;color:#94a3b8;display:block;margin-bottom:5px;font-weight:500;">
-              <i class="fa-solid fa-lock" style="margin-right:4px;"></i> Create Password *
-              <span style="font-size:0.65rem;color:#64748b;">(min 6 chars)</span>
-            </label>
-            <div style="position:relative;">
-              <input type="password" id="regPassword" autocomplete="new-password" minlength="6" placeholder="••••••••" required
-                class="form-control"
-                style="width:100%;padding:11px 42px 11px 14px;background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.12);
-                       border-radius:9px;color:#f8fafc;font-size:0.88rem;outline:none;transition:border-color 0.2s;"
-                onfocus="this.style.borderColor='rgba(56,189,248,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'"
-                oninput="checkPasswordStrength(this.value)">
-              <button type="button" onclick="togglePasswordVisibility('regPassword','eyeIconReg')"
-                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;
-                       cursor:pointer;color:#64748b;padding:0;font-size:0.85rem;" aria-label="Toggle password visibility">
-                <i class="fa-solid fa-eye" id="eyeIconReg"></i>
-              </button>
-            </div>
-            <div id="pwStrengthBar" style="height:3px;border-radius:2px;margin-top:6px;background:rgba(255,255,255,0.08);overflow:hidden;">
-              <div id="pwStrengthFill" style="height:100%;width:0%;transition:width 0.3s,background 0.3s;border-radius:2px;"></div>
-            </div>
-            <p id="pwStrengthLabel" style="font-size:0.65rem;color:#64748b;margin-top:3px;min-height:14px;"></p>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px;">Create Password (Min 6 chars) *</label>
+            <input type="password" id="regPassword" minlength="6" placeholder="••••••••" required class="form-control" style="background: rgba(30,41,59,0.7); border-color: rgba(255,255,255,0.1); color: #fff;">
           </div>
-
-          <div id="registerErrorBox" class="hidden"
-            style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);
-                   border-radius:8px;padding:10px 12px;color:#fca5a5;font-size:0.8rem;margin-bottom:12px;">
-          </div>
-
-          <!-- Perks strip -->
-          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-            <span style="font-size:0.65rem;color:#10b981;background:rgba(16,185,129,0.1);padding:3px 8px;border-radius:20px;">
-              <i class="fa-solid fa-bolt"></i> +100 XP on join
-            </span>
-            <span style="font-size:0.65rem;color:#38bdf8;background:rgba(56,189,248,0.1);padding:3px 8px;border-radius:20px;">
-              <i class="fa-solid fa-shield"></i> Verified Explorer badge
-            </span>
-            <span style="font-size:0.65rem;color:#f59e0b;background:rgba(245,158,11,0.1);padding:3px 8px;border-radius:20px;">
-              <i class="fa-solid fa-ticket"></i> Smart ticket access
-            </span>
-          </div>
-
-          <button type="submit" id="btnRegisterSubmit" class="btn btn-primary"
-            style="width:100%;padding:12px;font-weight:700;font-size:0.92rem;border-radius:10px;
-                   background:linear-gradient(135deg,#059669,#10b981);border:none;cursor:pointer;
-                   box-shadow:0 4px 15px rgba(16,185,129,0.3);">
-            <i class="fa-solid fa-user-plus"></i> Register &amp; Earn 100 XP
+          <div id="registerErrorBox" class="hidden" style="color: #fca5a5; font-size: 0.8rem; margin-bottom: 10px;"></div>
+          <button type="submit" id="btnRegisterSubmit" class="btn btn-primary" style="width: 100%; padding: 10px; font-weight: 700;">
+            Register & Earn 100 XP
           </button>
-
-          <p style="text-align:center;margin-top:14px;font-size:0.75rem;color:#64748b;">
-            Already have an account?
-            <button type="button" onclick="AuthService.switchAuthTab('login')"
-              style="background:none;border:none;color:#38bdf8;cursor:pointer;font-size:0.75rem;padding:0;">
-              Sign in →
-            </button>
-          </p>
         </form>
       </div>
-
     </div>
   </div>
 
@@ -1434,29 +1306,21 @@
       const pass = document.getElementById('loginPassword').value;
       const errBox = document.getElementById('loginErrorBox');
       const btn = document.getElementById('btnLoginSubmit');
-
-      if (!email || !pass) {
-        errBox.textContent = 'Please enter your email and password.';
-        errBox.style.display = 'block';
-        errBox.classList.remove('hidden');
-        return;
-      }
-
+      
       btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating…';
-      errBox.style.display = 'none';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...';
       errBox.classList.add('hidden');
-
+      errBox.textContent = '';
+      
       try {
         await AuthService.login(email, pass);
         AuthService.closeAuthModal();
       } catch (err) {
-        errBox.textContent = err.message || 'Login failed. Check your credentials.';
-        errBox.style.display = 'block';
+        errBox.textContent = err.message || 'Login failed.';
         errBox.classList.remove('hidden');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In to SafeTour';
+        btn.innerHTML = 'Sign In to SafeTour';
       }
     }
 
@@ -1468,90 +1332,34 @@
       const pass = document.getElementById('regPassword').value;
       const errBox = document.getElementById('registerErrorBox');
       const btn = document.getElementById('btnRegisterSubmit');
-
-      function showRegError(msg) {
-        errBox.textContent = msg;
-        errBox.style.display = 'block';
-        errBox.classList.remove('hidden');
-      }
-
-      if (!name) { showRegError('Full name is required.'); return; }
-      if (!email) { showRegError('Please enter a valid email address.'); return; }
-      if (!pass || pass.length < 6) {
-        showRegError('Password must be at least 6 characters.'); return;
-      }
-
+      
       btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Registering…';
-      errBox.style.display = 'none';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Registering...';
       errBox.classList.add('hidden');
-
+      errBox.textContent = '';
+      
       try {
         await AuthService.register(name, email, pass, city);
         AuthService.closeAuthModal();
       } catch (err) {
-        showRegError(err.message || 'Registration failed. Please try again.');
+        errBox.textContent = err.message || 'Registration failed.';
+        errBox.classList.remove('hidden');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Register & Earn 100 XP';
+        btn.innerHTML = 'Register & Earn 100 XP';
       }
     }
 
     async function demoLogin(email) {
-      const btn = event && event.target;
-      const origText = btn ? btn.innerHTML : '';
-      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; }
       try {
         await AuthService.login(email, 'Traveler@123');
         AuthService.closeAuthModal();
       } catch (err) {
-        alert('Demo login failed: ' + err.message);
-      } finally {
-        if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+        alert(err.message || 'Demo login failed');
       }
     }
 
-    // ── Password visibility toggle ──────────────────────────────────────────
-    function togglePasswordVisibility(inputId, iconId) {
-      const input = document.getElementById(inputId);
-      const icon  = document.getElementById(iconId);
-      if (!input || !icon) return;
-      if (input.type === 'password') {
-        input.type = 'text';
-        icon.className = 'fa-solid fa-eye-slash';
-      } else {
-        input.type = 'password';
-        icon.className = 'fa-solid fa-eye';
-      }
-    }
-
-    // ── Password strength meter ─────────────────────────────────────────────
-    function checkPasswordStrength(val) {
-      const fill  = document.getElementById('pwStrengthFill');
-      const label = document.getElementById('pwStrengthLabel');
-      if (!fill || !label) return;
-      let score = 0;
-      if (val.length >= 6)  score++;
-      if (val.length >= 10) score++;
-      if (/[A-Z]/.test(val)) score++;
-      if (/[0-9]/.test(val)) score++;
-      if (/[^A-Za-z0-9]/.test(val)) score++;
-      const levels = [
-        { pct: '0%',   color: 'transparent', text: '' },
-        { pct: '25%',  color: '#ef4444',      text: 'Weak' },
-        { pct: '50%',  color: '#f59e0b',      text: 'Fair' },
-        { pct: '75%',  color: '#38bdf8',      text: 'Good' },
-        { pct: '90%',  color: '#10b981',      text: 'Strong' },
-        { pct: '100%', color: '#10b981',      text: 'Very Strong ✓' },
-      ];
-      const lvl = levels[Math.min(score, 5)];
-      fill.style.width      = lvl.pct;
-      fill.style.background = lvl.color;
-      label.textContent     = lvl.text;
-      label.style.color     = lvl.color;
-    }
-
-    // ── Close auth modal on backdrop click ──────────────────────────────────
+    // Modal dismiss on backdrop click and Escape key
     document.addEventListener('DOMContentLoaded', function () {
       const authModal = document.getElementById('authModal');
       if (authModal) {
