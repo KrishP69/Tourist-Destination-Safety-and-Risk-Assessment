@@ -216,6 +216,8 @@ def init_db():
         _create_crowd_tables(cursor)
         # --- Live Disaster / Risk Intelligence (additive) ---
         _create_disaster_tables(cursor)
+        # --- Incident History Archive (additive) ---
+        _migrate_incident_columns(cursor)
 
 
 def _table_columns(cursor, table_name: str) -> set:
@@ -250,6 +252,17 @@ def _migrate_destination_crowd_columns(cursor):
     ]
     for col, ddl in migrations:
         _add_column_if_missing(cursor, "destinations", col, ddl)
+
+
+def _migrate_incident_columns(cursor):
+    """Add incident history and resolution tracking columns without destroying data."""
+    migrations = [
+        ("incident_date", "incident_date TEXT DEFAULT NULL"),
+        ("resolution_notes", "resolution_notes TEXT DEFAULT NULL"),
+        ("prevention_measures", "prevention_measures TEXT DEFAULT NULL"),
+    ]
+    for col, ddl in migrations:
+        _add_column_if_missing(cursor, "incidents", col, ddl)
 
 
 def _create_crowd_tables(cursor):

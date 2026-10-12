@@ -41,6 +41,7 @@ def haversine_distance(lat1, lon1, lat2, lon2):
 @router.post("/sos")
 def trigger_sos(req: SOSRequest):
     """Simulate instant SOS panic dispatch, find nearest assistance point"""
+    import re
     with get_db() as conn:
         cursor = conn.cursor()
         
@@ -60,35 +61,73 @@ def trigger_sos(req: SOSRequest):
                 fac["distance_km"] = 9999.0
 
         facilities.sort(key=lambda x: x["distance_km"])
-        nearest = facilities[:4]
+        
+        # Deduplicate facilities so duplicate hospitals or stations never appear
+        seen = set()
+        deduped = []
+        for fac in facilities:
+            name_norm = re.sub(r'[^a-zA-Z0-9]', '', (fac.get("facility_name") or "").lower()[:14])
+            phone_norm = (fac.get("phone") or "").replace("-", "").replace(" ", "").replace("+91", "")
+            key = (name_norm, phone_norm)
+            if key not in seen:
+                seen.add(key)
+                deduped.append(fac)
+
+        nearest = deduped[:4]
 
         # Log emergency dispatch incident
         target_dest_id = req.destination_id or (nearest[0]["destination_id"] if nearest else 1)
         user_notes = req.user_note or "Immediate emergency assistance requested via traveler SOS beacon."
+        emg_type = req.emergency_type or "General Emergency"
         cursor.execute("""
         INSERT INTO incidents (destination_id, title, category, severity, location_name, lat, lng, description, upvotes, status)
         VALUES (?, '🚨 EMERGENCY SOS BEACON TRIGGERED', ?, 'Critical', 'Traveler GPS Coordinates', ?, ?, ?, 10, 'Active')
-        """, (target_dest_id, req.emergency_type or "Medical Emergency", req.lat, req.lng, f"Emergency alert: {req.emergency_type}. Details: {user_notes}"))
+        """, (target_dest_id, emg_type, req.lat, req.lng, f"Emergency alert: {emg_type}. Details: {user_notes}"))
         inc_id = cursor.lastrowid
 
         # Auto-create initial dispatch alert
+        unit_type = "Medical" if "medical" in emg_type.lower() else "Police"
+        callsign = "ALS-AMBULANCE-108" if unit_type == "Medical" else "PCR-RAPID-INTERCEPT-112"
         cursor.execute("""
             INSERT INTO emergency_dispatches (incident_id, agency_type, unit_callsign, contact_phone, dispatch_status, eta_minutes, responder_notes)
-            VALUES (?, 'Police', 'PCR-RAPID-INTERCEPT-112', '112', 'DISPATCHED', 5, 'Incoming SOS alert logged. Nearest patrol squad assigned.')
-        """, (inc_id,))
+            VALUES (?, ?, ?, '112', 'DISPATCHED', 6, 'Incoming high-priority traveler SOS beacon. Immediate interception ordered.')
+        """, (inc_id, unit_type, callsign))
+
+        tracking_token = f"SOS-IND-{inc_id:04d}"
 
         return {
             "sos_active": True,
             "incident_id": inc_id,
+            "tracking_token": tracking_token,
+            "emergency_type": emg_type,
+            "eta_minutes": 6,
             "message": "Emergency SOS broadcasted. Police, Fire, and Medical Command Centers notified.",
             "nearest_facilities": nearest,
             "universal_emergency_numbers": {
                 "National Emergency Support": "112",
-                "Tourist Police Hotline": "1364 / 112",
-                "Fire & Rescue": "101",
-                "Ambulance / Medical": "108"
+                "Ambulance / Medical": "108",
+                "Women Helpline": "1091",
+                "Tourist Police Hotline": "1364",
+                "Fire & Rescue": "101"
             }
         }
+
+@router.post("/sos/deescalate")
+def deescalate_sos(payload: dict):
+    """Traveler signals false alarm or situation resolved — stand down units"""
+    incident_id = payload.get("incident_id")
+    reason = payload.get("reason", "Traveler signaled I AM SAFE / de-escalation.")
+    if not incident_id:
+        return {"ok": False, "message": "Missing incident_id"}
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE incidents SET status = 'Resolved' WHERE id = ?", (incident_id,))
+        cursor.execute("""
+            UPDATE emergency_dispatches 
+            SET dispatch_status = 'RESOLVED', responder_notes = ?, updated_at = CURRENT_TIMESTAMP 
+            WHERE incident_id = ?
+        """, (reason, incident_id))
+    return {"ok": True, "message": "Emergency SOS beacon de-escalated. All units stood down."}
 
 @router.get("/facilities")
 def get_all_facilities(destination_id: Optional[int] = None):

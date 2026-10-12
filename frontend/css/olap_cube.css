@@ -1,0 +1,490 @@
+/* ==========================================================================
+   SafeTour OLAP Multi-Dimensional Analytics & 3D Cube Styles
+   ========================================================================== */
+
+/* Modal Container */
+.olap-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.olap-modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.olap-modal-container {
+  width: 95vw;
+  max-width: 1240px;
+  max-height: 92vh;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.92));
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 35px rgba(56, 189, 248, 0.15);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #f8fafc;
+  font-family: inherit;
+  animation: olapModalPop 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes olapModalPop {
+  0% { transform: scale(0.92) translateY(20px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* Modal Header */
+.olap-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.olap-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.olap-title-wrap h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+  background: linear-gradient(135deg, #38bdf8, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.olap-tag-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.olap-close-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.olap-close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Modal Body */
+.olap-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* KPI Summary Cards */
+.olap-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.olap-kpi-card {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.olap-kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.olap-kpi-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.olap-kpi-icon.users { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+.olap-kpi-icon.traffic { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+.olap-kpi-icon.safety { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+.olap-kpi-icon.dests { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
+
+.olap-kpi-info h4 {
+  margin: 0 0 2px;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.olap-kpi-val {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.2;
+}
+
+.olap-kpi-sub {
+  font-size: 0.7rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* Control Bar (Dropdown & Filters) */
+.olap-control-bar {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.olap-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 170px;
+}
+
+.olap-control-group label {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.olap-select {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.olap-select:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.olap-btn-execute {
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-end;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+}
+
+.olap-btn-execute:hover {
+  background: linear-gradient(135deg, #0369a1, #1d4ed8);
+  transform: translateY(-1px);
+}
+
+/* Operation Explanation Banner */
+.olap-operation-banner {
+  background: rgba(56, 189, 248, 0.08);
+  border-left: 4px solid #38bdf8;
+  border-radius: 0 10px 10px 0;
+  padding: 10px 16px;
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.olap-operation-banner strong {
+  color: #38bdf8;
+}
+
+/* Main Split View: 3D Cube Visualizer + Data Grid */
+.olap-split-view {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 980px) {
+  .olap-split-view {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 3D Cube Card */
+.olap-cube-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.olap-cube-stage {
+  width: 240px;
+  height: 240px;
+  perspective: 900px;
+  margin: 15px auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.olap-cube {
+  width: 130px;
+  height: 130px;
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateX(-24deg) rotateY(32deg);
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: grab;
+}
+
+.olap-cube.animate-spin {
+  animation: olapCubeSpin 18s linear infinite;
+}
+
+@keyframes olapCubeSpin {
+  0% { transform: rotateX(-20deg) rotateY(0deg); }
+  50% { transform: rotateX(-28deg) rotateY(180deg); }
+  100% { transform: rotateX(-20deg) rotateY(360deg); }
+}
+
+.olap-cube-face {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  border: 2px solid rgba(56, 189, 248, 0.7);
+  box-shadow: inset 0 0 15px rgba(56, 189, 248, 0.2);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 2px;
+  padding: 2px;
+  background: rgba(15, 23, 42, 0.75);
+  backface-visibility: visible;
+  transition: all 0.3s ease;
+}
+
+.olap-cube-face.front  { transform: rotateY(0deg) translateZ(65px); border-color: #38bdf8; background: rgba(56, 189, 248, 0.15); }
+.olap-cube-face.back   { transform: rotateY(180deg) translateZ(65px); border-color: #6366f1; background: rgba(99, 102, 241, 0.15); }
+.olap-cube-face.right  { transform: rotateY(90deg) translateZ(65px); border-color: #a855f7; background: rgba(168, 85, 247, 0.15); }
+.olap-cube-face.left   { transform: rotateY(-90deg) translateZ(65px); border-color: #ec4899; background: rgba(236, 72, 153, 0.15); }
+.olap-cube-face.top    { transform: rotateX(90deg) translateZ(65px); border-color: #22c55e; background: rgba(34, 197, 94, 0.15); }
+.olap-cube-face.bottom { transform: rotateX(-90deg) translateZ(65px); border-color: #eab308; background: rgba(234, 179, 8, 0.15); }
+
+/* Voxel Sub-Cells inside Faces */
+.cube-subcell {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.cube-subcell:hover, .cube-subcell.active-slice {
+  background: rgba(56, 189, 248, 0.6);
+  border-color: #38bdf8;
+  color: #ffffff;
+  box-shadow: 0 0 8px #38bdf8;
+}
+
+/* Slicing Laser Plane */
+.olap-slice-laser {
+  position: absolute;
+  width: 170px;
+  height: 170px;
+  background: rgba(56, 189, 248, 0.35);
+  border: 2px dashed #38bdf8;
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.6);
+  pointer-events: none;
+  transform-style: preserve-3d;
+  display: none;
+  border-radius: 4px;
+}
+
+.olap-slice-laser.show {
+  display: block;
+}
+
+/* Cube Axis Legend */
+.olap-axes-legend {
+  width: 100%;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.72rem;
+}
+
+.olap-axis-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.olap-axis-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.axis-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.axis-dot.x { background: #38bdf8; }
+.axis-dot.y { background: #22c55e; }
+.axis-dot.z { background: #a855f7; }
+
+/* Data Display Card & Table */
+.olap-grid-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 380px;
+}
+
+.olap-grid-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.olap-grid-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.olap-table-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.olap-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+.olap-table th {
+  background: rgba(30, 41, 59, 0.8);
+  color: #94a3b8;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+}
+
+.olap-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+
+.olap-table tr:hover td {
+  background: rgba(56, 189, 248, 0.06);
+}
+
+.score-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.score-badge.high { background: rgba(34, 197, 94, 0.18); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+.score-badge.mid { background: rgba(234, 179, 8, 0.18); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
+.score-badge.low { background: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }

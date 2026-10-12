@@ -21,11 +21,13 @@
 }
 
 .nav-container.ux-nav {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 14px;
+  display: flex;
   align-items: center;
-  padding: 10px 16px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 18px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .brand-subtitle.ux-sub {
@@ -37,19 +39,25 @@
 .nav-center {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
 .nav-center .nav-search-bar {
-  flex: 1;
+  flex: 0 1 380px;
+  min-width: 160px;
   max-width: 420px;
+  width: 100%;
 }
 
 .nav-right {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .nav-btn {
@@ -78,40 +86,77 @@
 .nav-btn.secondary { color: #cbd5e1; }
 
 .nav-location-btn {
+  display: inline-flex;
   align-items: center;
-  max-width: 180px;
-  padding-top: 6px;
-  padding-bottom: 6px;
+  gap: 8px;
+  min-height: 38px;
+  max-width: 175px;
+  padding: 5px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: rgba(15, 23, 42, 0.75);
+  color: #e2e8f0;
+  font-family: Inter, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin: 0;
+  transition: all 0.2s ease;
 }
+
+.nav-location-btn:hover, .nav-location-btn:focus-visible {
+  border-color: rgba(56, 189, 248, 0.6);
+  background: rgba(30, 41, 59, 0.85);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+}
+
+.nav-location-btn .location-dot-icon {
+  color: #38bdf8;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
 .nav-location-text {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 1px;
+  text-align: left;
   min-width: 0;
   line-height: 1.15;
 }
+
+#myLocationLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  letter-spacing: 0.01em;
+}
+
 .nav-location-place {
   display: block;
   font-size: 0.62rem;
   font-weight: 500;
   color: #94a3b8;
-  max-width: 130px;
+  max-width: 110px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .nav-btn.primary-ticket {
   background: rgba(16, 185, 129, 0.14);
   border-color: rgba(16, 185, 129, 0.35);
   color: #6ee7b7;
+  flex-shrink: 0;
 }
+
 .nav-btn.sos-btn {
   background: rgba(239, 68, 68, 0.12);
   border-color: rgba(239, 68, 68, 0.4);
   color: #fca5a5;
   font-weight: 700;
 }
+
 .nav-btn.sos-btn.holding {
   background: rgba(239, 68, 68, 0.35);
   border-color: #ef4444;
@@ -122,30 +167,54 @@
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
+  justify-content: center;
+  text-align: left;
   gap: 0;
-  padding: 6px 10px;
+  padding: 5px 12px;
+  min-height: 38px;
   border-radius: 10px;
   border: 1px solid rgba(16, 185, 129, 0.35);
   background: rgba(16, 185, 129, 0.1);
   color: #6ee7b7;
   font-size: 0.72rem;
   font-weight: 700;
+  font-family: Inter, sans-serif;
   cursor: pointer;
-  line-height: 1.2;
+  line-height: 1.15;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin: 0;
+  transition: all 0.2s ease;
 }
+
+.live-chip:hover, .live-chip:focus-visible {
+  border-color: rgba(16, 185, 129, 0.6);
+  background: rgba(16, 185, 129, 0.18);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+}
+
 .live-chip .live-sub {
   font-size: 0.62rem;
   font-weight: 500;
   color: #94a3b8;
 }
+
 .live-chip.delayed {
-  border-color: rgba(245, 158, 11, 0.4);
+  border-color: rgba(245, 158, 11, 0.45);
   background: rgba(245, 158, 11, 0.1);
   color: #fbbf24;
 }
+
 .live-chip.demo {
   border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.1);
   color: #fbbf24;
+}
+
+.live-chip.demo:hover {
+  border-color: rgba(245, 158, 11, 0.7);
+  background: rgba(245, 158, 11, 0.18);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
 }
 
 .nav-more-wrap { position: relative; }

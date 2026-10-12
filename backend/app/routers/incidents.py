@@ -34,6 +34,43 @@ def get_incidents(
         cursor.execute(query, params)
         return [dict(r) for r in cursor.fetchall()]
 
+@router.get("/history")
+def get_incident_history(
+    destination_id: Optional[int] = None,
+    category: Optional[str] = None,
+    search: Optional[str] = None,
+    limit: int = 60
+):
+    """
+    Returns historical safety incidents and archive records across destinations.
+    Includes past events (fatal falls, suicides, flash floods, stampedes, rescues)
+    with prevention measures, resolution notes, and historical timestamps.
+    """
+    with get_db() as conn:
+        cursor = conn.cursor()
+        query = """
+        SELECT i.*, d.name as destination_name, d.state as destination_state, d.region as destination_region, d.image_url as destination_image
+        FROM incidents i
+        JOIN destinations d ON i.destination_id = d.id
+        WHERE (i.status IN ('Historical Record', 'Resolved', 'Archived', 'Closed') OR i.status LIKE '%Historical%' OR i.status LIKE '%Resolved%')
+        """
+        params = []
+        if destination_id:
+            query += " AND i.destination_id = ?"
+            params.append(destination_id)
+        if category and category != "All":
+            query += " AND i.category LIKE ?"
+            params.append(f"%{category}%")
+        if search:
+            query += " AND (i.title LIKE ? OR i.description LIKE ? OR i.location_name LIKE ? OR d.name LIKE ?)"
+            term = f"%{search}%"
+            params.extend([term, term, term, term])
+
+        query += " ORDER BY i.reported_at DESC LIMIT ?"
+        params.append(limit)
+        cursor.execute(query, params)
+        return [dict(r) for r in cursor.fetchall()]
+
 @router.post("")
 def report_incident(incident: IncidentCreate):
     with get_db() as conn:

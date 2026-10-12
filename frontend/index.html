@@ -20,10 +20,11 @@
   <link rel="stylesheet" href="/static/css/map.css?v=risk1">
   <link rel="stylesheet" href="/static/css/pulse.css?v=risk1">
   <link rel="stylesheet" href="/static/css/crowd.css?v=risk1">
-  <link rel="stylesheet" href="/static/css/ux.css?v=risk1">
-  <link rel="stylesheet" href="/static/css/tourist.css?v=dest3">
+  <link rel="stylesheet" href="/static/css/ux.css?v=navfix2">
+  <link rel="stylesheet" href="/static/css/tourist.css?v=navfix2">
   <link rel="stylesheet" href="/static/css/destinations.css?v=dest3">
   <link rel="stylesheet" href="/static/css/live_risk.css?v=risk1">
+  <link rel="stylesheet" href="/static/css/olap_cube.css">
 </head>
 <body class="tourist-mode">
   <!-- Soft ambient (kept for brand continuity, toned down in CSS) -->
@@ -57,6 +58,7 @@
           <button type="button" class="nav-text-link" id="btnOpenExplore">Explore</button>
           <button type="button" class="nav-text-link" data-jump="safety" id="navLinkSafety">Safety</button>
           <button type="button" class="nav-text-link" data-jump="alerts" id="navLinkAlerts">Alerts</button>
+          <button type="button" class="nav-text-link" id="navLinkHistory"><i class="fa-solid fa-clock-rotate-left" style="color:#f59e0b;font-size:0.75rem;"></i> History</button>
           <button type="button" class="nav-text-link" id="navLinkTickets">My Tickets</button>
         </nav>
         <div class="nav-search-bar">
@@ -64,16 +66,16 @@
           <input type="text" id="destinationSearchInput" placeholder="Search places…" autocomplete="off" aria-label="Search places on map">
           <button id="clearSearchBtn" class="clear-btn" style="display:none;" aria-label="Clear search"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <button id="btnAcquireCurrentGPS" class="nav-btn secondary nav-location-btn" type="button" title="Enable or use your location" aria-label="My Location">
-          <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+      </div>
+
+      <div class="nav-right">
+        <button id="btnAcquireCurrentGPS" class="nav-btn secondary nav-location-btn hide-mobile" type="button" title="Enable or use your location" aria-label="My Location">
+          <i class="fa-solid fa-location-dot location-dot-icon" aria-hidden="true"></i>
           <span class="nav-location-text">
             <span id="myLocationLabel">My Location</span>
             <span id="myLocationPlace" class="nav-location-place">—</span>
           </span>
         </button>
-      </div>
-
-      <div class="nav-right">
         <button type="button" id="liveStatusChip" class="live-chip hide-mobile" title="Live data status" aria-label="Live data status">
           <span>● LIVE</span>
           <span class="live-sub" id="liveStatusSub">Checking…</span>
@@ -82,6 +84,10 @@
           <i class="fa-solid fa-ticket" aria-hidden="true"></i>
           <span>My Tickets</span>
         </button>
+        <button type="button" id="btnNavAnalysis" class="nav-btn secondary hide-mobile" aria-label="OLAP Intelligence & Safety Analysis" style="background:rgba(56,189,248,0.12);border-color:rgba(56,189,248,0.35);">
+          <i class="fa-solid fa-cube" aria-hidden="true" style="color:#38bdf8;"></i>
+          <span>Analysis</span>
+        </button>
         <div id="headerUserCapsuleContainer" class="hide-mobile"></div>
         <div class="nav-more-wrap hide-mobile">
           <button type="button" id="btnNavMore" class="nav-btn secondary" aria-haspopup="true" aria-expanded="false" aria-label="More actions">
@@ -89,6 +95,7 @@
             <span>More</span>
           </button>
           <div id="navMoreMenu" class="nav-more-menu" role="menu">
+            <button type="button" id="openAnalysisModalBtn" role="menuitem"><i class="fa-solid fa-cube" style="color:#38bdf8;"></i> OLAP Analysis</button>
             <button type="button" id="openReportModalBtn" role="menuitem"><i class="fa-solid fa-triangle-exclamation"></i> Report Hazard</button>
             <button type="button" id="syncAllLiveBtn" role="menuitem"><i class="fa-solid fa-arrows-rotate"></i> Sync weather</button>
             <a href="/responder" role="menuitem"><i class="fa-solid fa-shield-halved"></i> Emergency EOC</a>
@@ -131,6 +138,8 @@
       <button type="button" id="btnCloseMobileMenu" class="nav-btn" style="justify-content:space-between;">Close <i class="fa-solid fa-xmark"></i></button>
       <button type="button" class="nav-btn" id="mobileBtnLocation"><i class="fa-solid fa-location-dot"></i> My Location</button>
       <button type="button" class="nav-btn primary-ticket" id="mobileBtnTickets"><i class="fa-solid fa-ticket"></i> My Tickets</button>
+      <button type="button" class="nav-btn" id="mobileBtnAnalysis"><i class="fa-solid fa-cube" style="color:#38bdf8;"></i> OLAP Analysis</button>
+      <button type="button" class="nav-btn" id="mobileBtnHistory"><i class="fa-solid fa-clock-rotate-left" style="color:#f59e0b;"></i> Incident History</button>
       <button type="button" class="nav-btn sos-btn" id="mobileBtnSos"><i class="fa-solid fa-bell"></i> SOS (press &amp; hold)</button>
       <button type="button" class="nav-btn" id="mobileBtnLive"><i class="fa-solid fa-circle"></i> Live status</button>
       <button type="button" class="nav-btn" id="mobileBtnReport"><i class="fa-solid fa-triangle-exclamation"></i> Report Hazard</button>
@@ -536,6 +545,7 @@
         <div id="crowdIntelCard" class="crowd-intel-card">
           <div class="crowd-intel-header">
             <span class="crowd-intel-title">Live Crowd Intelligence</span>
+            <span id="dwmModelBadge" style="background:rgba(56,189,248,0.18);color:#38bdf8;border:1px solid rgba(56,189,248,0.35);font-size:0.65rem;padding:2px 7px;border-radius:6px;font-weight:700;"><i class="fa-solid fa-brain"></i> DWM MLR + Decision Tree</span>
             <span id="crowdDemoBanner" class="crowd-demo-banner"><i class="fa-solid fa-flask"></i> DEMO MODE</span>
             <span id="locationPresenceStatus" class="location-status-chip">Location off</span>
           </div>
@@ -707,6 +717,10 @@
             </div>
           </div>
           <div class="gauge-insights">
+            <div id="scoreNewsImpactBadge" class="score-news-impact-tag" style="display:none;margin-bottom:8px;padding:4px 10px;border-radius:8px;font-size:0.75rem;font-weight:600;align-items:center;gap:6px;">
+              <i class="fa-solid fa-bolt" style="color:#f59e0b;"></i>
+              <span id="scoreNewsImpactText">News Impact</span>
+            </div>
             <h4 id="detailVerdictTitle">Optimal Travel Conditions</h4>
             <p id="detailVerdictText">Low crime rate, high tourist police vigilance, reliable medical units, and robust traveler safety.</p>
             <div class="best-time-tag">
@@ -772,14 +786,39 @@
           </div>
         </div>
 
-        <!-- Real-Time Google News & Travel Bulletins Section -->
-        <div class="detail-section">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <h4><i class="fa-brands fa-google" style="color:#38bdf8;"></i> Live Google News & Safety Feed</h4>
-            <span class="live-pulse-badge" style="font-size: 9px;"><span class="live-dot"></span> LIVE RSS TELEMETRY</span>
+        <!-- Real-Time News & Historical Incident Archive (Dual Interface) -->
+        <div class="detail-section" id="detailNewsHistoryWrapper">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+            <div class="news-history-pill-tabs" style="display: flex; gap: 6px; background: rgba(15,23,42,0.6); padding: 4px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
+              <button type="button" id="tabBtnLiveNews" class="tab-btn-pill active" onclick="window.switchNewsHistoryTab('news')" style="padding: 6px 14px; border-radius: 8px; border: none; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; background: rgba(56,189,248,0.2); color: #38bdf8;">
+                <i class="fa-brands fa-google"></i> Live News
+              </button>
+              <button type="button" id="tabBtnHistory" class="tab-btn-pill" onclick="window.switchNewsHistoryTab('history')" style="padding: 6px 14px; border-radius: 8px; border: none; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; background: transparent; color: #94a3b8;">
+                <i class="fa-solid fa-clock-rotate-left" style="color: #f59e0b;"></i> Incident History <span id="detailHistoryCountBadge" style="background: rgba(245,158,11,0.25); color: #fbbf24; font-size: 0.68rem; padding: 1px 6px; border-radius: 10px; margin-left: 2px;">0</span>
+              </button>
+            </div>
+            <button type="button" id="btnExploreFullArchive" onclick="window.openFullHistoryModal()" style="background: rgba(255,255,255,0.05); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.12); font-size: 0.72rem; padding: 5px 10px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+              <i class="fa-solid fa-book-bookmark" style="color: #38bdf8;"></i> Full India Archive
+            </button>
           </div>
-          <div id="detailGoogleNewsList" class="google-news-container">
-            <!-- Injected via JS -->
+
+          <!-- Tab 1: Live News Panel -->
+          <div id="panelLiveNewsContent">
+            <div id="detailNewsScoreImpactBanner" style="display:none;margin-bottom:10px;padding:8px 12px;border-radius:10px;font-size:0.78rem;line-height:1.4;"></div>
+            <div id="detailGoogleNewsList" class="google-news-container">
+              <!-- Injected via JS -->
+            </div>
+          </div>
+
+          <!-- Tab 2: Historical Incidents Archive Panel -->
+          <div id="panelHistoryContent" style="display: none;">
+            <div style="font-size: 0.72rem; color: #94a3b8; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-circle-info" style="color: #f59e0b;"></i>
+              <span>Official past incident logs, cliff hazard records, and preventative safety measures.</span>
+            </div>
+            <div id="detailHistoricalIncidentsList" class="historical-incidents-container" style="display: flex; flex-direction: column; gap: 10px;">
+              <!-- Injected via JS -->
+            </div>
           </div>
         </div>
 
@@ -1241,36 +1280,301 @@
     </div>
   </div>
 
-  <div id="sosPanicModal" class="modal-backdrop sos-backdrop" style="display: none;">
+  <div id="sosPanicModal" class="modal-backdrop sos-backdrop" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="sosModalTitle">
     <div class="sos-modal-card">
-      <div class="sos-radar-ping">
+      <div id="sosBeaconPing" class="sos-radar-ping">
         <i class="fa-solid fa-tower-broadcast"></i>
       </div>
-      <h2 class="sos-title">BHARAT EMERGENCY SOS BEACON</h2>
-      <p class="sos-subtitle">Broadcasting emergency locator coordinates to State Police Control Room (112) & nearest medical response units.</p>
+      <h2 id="sosModalTitle" class="sos-title">BHARAT EMERGENCY SOS BEACON</h2>
+      <p id="sosModalSubtitle" class="sos-subtitle">Broadcasting emergency locator coordinates to State Police Control Room (112) &amp; nearest medical response units.</p>
 
-      <div class="sos-timer-box">
-        <span id="sosCountdownNumber" class="countdown-digits">5</span>
-        <span class="countdown-label">Seconds until automatic dispatch</span>
+      <!-- Emergency Category Chips -->
+      <div id="sosCategoryStrip" class="sos-category-strip">
+        <div class="sos-cat-title"><i class="fa-solid fa-tags"></i> Select Emergency Type:</div>
+        <div class="sos-cat-chips">
+          <button type="button" class="sos-cat-chip active" data-cat="General Emergency">🚨 General</button>
+          <button type="button" class="sos-cat-chip" data-cat="Medical Emergency">🚑 Medical</button>
+          <button type="button" class="sos-cat-chip" data-cat="Police / Crime">🚓 Police / Crime</button>
+          <button type="button" class="sos-cat-chip" data-cat="Women Safety">🛡️ Women Safety</button>
+          <button type="button" class="sos-cat-chip" data-cat="Accident / Fire">🔥 Fire / Accident</button>
+        </div>
       </div>
 
-      <div class="sos-coords-box">
-        <i class="fa-solid fa-crosshairs"></i>
-        <span>Telemetry Coordinates: <strong id="sosCoordsDisplay">Acquiring GPS Fix...</strong></span>
+      <!-- Main Countdown / Dispatch Banner Box -->
+      <div id="sosTimerBox" class="sos-timer-box">
+        <div class="sos-timer-header">
+          <span id="sosCountdownNumber" class="countdown-digits">5</span>
+          <div id="sosStatusBadgeWrap" style="display:none;">
+            <span class="sos-active-badge"><i class="fa-solid fa-satellite-dish"></i> LIVE BEACON BROADCASTING</span>
+            <span id="sosTrackingToken" class="sos-token-code">TOKEN: SOS-IND-7821</span>
+          </div>
+        </div>
+        <span id="sosCountdownLabel" class="countdown-label">Seconds until automatic dispatch</span>
+        <div id="sosProgressBarWrap" class="sos-progress-bar-wrap">
+          <div id="sosProgressBarFill" class="sos-progress-bar-fill"></div>
+        </div>
+        <div id="sosDispatchEta" class="sos-dispatch-eta" style="display:none;">
+          <i class="fa-solid fa-car-side" style="color:#ef4444;"></i>
+          <span>Nearest Patrol Intercept: <strong>~5-7 mins ETA</strong> • PCR Dispatched</span>
+        </div>
       </div>
 
+      <!-- Live GPS & Telemetry Strip -->
+      <div class="sos-telemetry-row">
+        <div class="sos-coords-box">
+          <i class="fa-solid fa-crosshairs"></i>
+          <span>Coordinates: <strong id="sosCoordsDisplay">Acquiring GPS Fix...</strong></span>
+        </div>
+        <div id="sosDeviceMeta" class="sos-device-meta">
+          <span id="sosBatteryDisplay"><i class="fa-solid fa-battery-half"></i> Battery 85%</span>
+          <span class="sos-accuracy-pill"><i class="fa-solid fa-circle-check"></i> High Accuracy</span>
+        </div>
+      </div>
+
+      <!-- Quick Action Dial / WhatsApp Strip -->
       <div class="emergency-quick-dial-strip">
-        <a href="tel:112" class="quick-dial-btn"><i class="fa-solid fa-phone"></i> National Emergency (112)</a>
-        <a href="tel:1364" class="quick-dial-btn tourist"><i class="fa-solid fa-shield"></i> Tourist Helpline (1364)</a>
+        <a href="tel:112" class="quick-dial-btn"><i class="fa-solid fa-phone"></i> Police (112)</a>
+        <a href="tel:108" class="quick-dial-btn ambulance"><i class="fa-solid fa-truck-medical"></i> Ambulance (108)</a>
+        <a href="tel:1364" class="quick-dial-btn tourist"><i class="fa-solid fa-shield"></i> Tourist (1364)</a>
       </div>
 
+      <!-- Live Distress Tool Actions (WhatsApp SOS, Siren, Silent Mode) -->
+      <div id="sosAuxToolsStrip" class="sos-aux-tools">
+        <button type="button" id="btnSosShareWhatsapp" class="sos-tool-btn whatsapp" title="Share distress message + Google Maps link to family/friends on WhatsApp">
+          <i class="fa-brands fa-whatsapp"></i> Share GPS on WhatsApp
+        </button>
+        <button type="button" id="btnSosToggleSiren" class="sos-tool-btn siren" title="Sound loud emergency alarm to attract immediate attention">
+          <i class="fa-solid fa-volume-high"></i> <span id="sosSirenBtnText">Sound Alarm</span>
+        </button>
+        <button type="button" id="btnSosSilentMode" class="sos-tool-btn silent" title="Mute all sounds for covert/safe tracking">
+          <i class="fa-solid fa-volume-xmark"></i> Silent Mode
+        </button>
+      </div>
+
+      <!-- Injected Nearest Facilities List -->
       <div id="sosNearestFacilities" class="sos-facilities-list">
-        <!-- Injected upon trigger -->
+        <!-- Dynamically rendered upon trigger -->
       </div>
 
+      <!-- Action Buttons Footer -->
       <div class="sos-actions">
-        <button id="cancelSosBtn" class="btn-sos-cancel">ABORT EMERGENCY (FALSE ALARM)</button>
-        <button id="instantSosConfirmBtn" class="btn-sos-confirm">DISPATCH IMMEDIATELY</button>
+        <!-- Pre-dispatch buttons -->
+        <button type="button" id="cancelSosBtn" class="btn-sos-cancel">ABORT EMERGENCY (FALSE ALARM)</button>
+        <button type="button" id="instantSosConfirmBtn" class="btn-sos-confirm">DISPATCH IMMEDIATELY</button>
+        
+        <!-- Post-dispatch buttons (shown once sent) -->
+        <button type="button" id="deescalateSosBtn" class="btn-sos-safe" style="display:none;">
+          <i class="fa-solid fa-circle-check"></i> I AM SAFE NOW (RESOLVE ALERT)
+        </button>
+        <a href="tel:112" id="callPoliceDirectBtn" class="btn-sos-call-112" style="display:none;">
+          <i class="fa-solid fa-phone-volume"></i> CALL 112 DIRECTLY
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- OLAP Multi-Dimensional Analytics & 3D Cube Modal -->
+  <div id="olapAnalysisModal" class="olap-modal-overlay" aria-hidden="true">
+    <div class="olap-modal-container" role="dialog" aria-modal="true" aria-labelledby="olapModalTitle">
+      <div class="olap-modal-header">
+        <div class="olap-title-wrap">
+          <h2 id="olapModalTitle"><i class="fa-solid fa-cube"></i> OLAP Safety &amp; Traffic Intelligence Cube</h2>
+          <span class="olap-tag-pill">Live Telemetry Engine</span>
+        </div>
+        <button type="button" id="closeOlapModalBtn" class="olap-close-btn" aria-label="Close Analysis Modal">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="olap-modal-body">
+        <!-- Live KPI Overview -->
+        <div class="olap-kpi-grid">
+          <div class="olap-kpi-card">
+            <div class="olap-kpi-icon users"><i class="fa-solid fa-users"></i></div>
+            <div class="olap-kpi-info">
+              <h4>Registered Travelers</h4>
+              <div class="olap-kpi-val" id="olapKpiUsers">—</div>
+              <div class="olap-kpi-sub">Total database accounts</div>
+            </div>
+          </div>
+          <div class="olap-kpi-card">
+            <div class="olap-kpi-icon traffic"><i class="fa-solid fa-person-walking-luggage"></i></div>
+            <div class="olap-kpi-info">
+              <h4>Total Footfall Capacity</h4>
+              <div class="olap-kpi-val" id="olapKpiTraffic">—</div>
+              <div class="olap-kpi-sub">Across 78 destinations</div>
+            </div>
+          </div>
+          <div class="olap-kpi-card">
+            <div class="olap-kpi-icon safety"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="olap-kpi-info">
+              <h4>Network Safety Score</h4>
+              <div class="olap-kpi-val" id="olapKpiSafety">—</div>
+              <div class="olap-kpi-sub">Weighted multi-factor avg</div>
+            </div>
+          </div>
+          <div class="olap-kpi-card">
+            <div class="olap-kpi-icon dests"><i class="fa-solid fa-mountain-sun"></i></div>
+            <div class="olap-kpi-info">
+              <h4>Monitored Spots</h4>
+              <div class="olap-kpi-val" id="olapKpiDests">—</div>
+              <div class="olap-kpi-sub">Pan-India coverage</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls: Operation Selector & Dynamic Filters -->
+        <div class="olap-control-bar">
+          <div class="olap-control-group">
+            <label><i class="fa-solid fa-sliders"></i> OLAP Operation</label>
+            <select id="olapOperationSelect" class="olap-select">
+              <option value="cube">Interactive 3D OLAP Cube (All Dimensions)</option>
+              <option value="rollup">Roll-Up (Aggregate to Higher Level)</option>
+              <option value="drilldown">Drill-Down (Granular Decomposition)</option>
+              <option value="slice">Slice (Extract 2D Plane by 1 Dimension)</option>
+              <option value="dice">Dice (Multi-Dimensional Sub-Cube)</option>
+              <option value="pivot">Pivot (2D Matrix Cross-Tabulation)</option>
+            </select>
+          </div>
+
+          <!-- Injected Dynamic Filters depending on operation -->
+          <div id="olapDynamicFilters" style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;"></div>
+
+          <button type="button" id="btnExecuteOlap" class="olap-btn-execute">
+            <i class="fa-solid fa-play"></i> Execute Query
+          </button>
+        </div>
+
+        <!-- Banner explaining the operation -->
+        <div class="olap-operation-banner">
+          <i class="fa-solid fa-circle-info" style="color:#38bdf8;"></i>
+          <span id="olapOperationBannerText">Select an OLAP operation above to interactively slice, drill, or pivot live database numbers.</span>
+        </div>
+
+        <!-- Split View: 3D Isometric Cube + Analytical Data Grid -->
+        <div class="olap-split-view">
+          <!-- 3D Cube Visualizer -->
+          <div class="olap-cube-card">
+            <div style="width:100%;display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:0.75rem;font-weight:700;color:#94a3b8;text-transform:uppercase;">
+                <i class="fa-solid fa-cubes"></i> 3D Data Cube
+              </span>
+              <button type="button" id="toggleCubeSpinBtn" class="nav-btn secondary" style="padding:3px 8px;font-size:0.7rem;">
+                <i class="fa-solid fa-pause"></i> Pause Spin
+              </button>
+            </div>
+
+            <div class="olap-cube-stage" id="olapCubeStage" title="Drag with mouse to rotate 3D Cube">
+              <div class="olap-cube animate-spin" id="olap3dCube">
+                <!-- 6 Faces of the Cube with 3x3 Voxels -->
+                <div class="olap-cube-face front">
+                  <div class="cube-subcell">Heritage</div><div class="cube-subcell">Mtn</div><div class="cube-subcell">Beach</div>
+                  <div class="cube-subcell">Spiritual</div><div class="cube-subcell">Forest</div><div class="cube-subcell">Urban</div>
+                  <div class="cube-subcell">Forts</div><div class="cube-subcell">Trek</div><div class="cube-subcell">Coast</div>
+                </div>
+                <div class="olap-cube-face back">
+                  <div class="cube-subcell">East</div><div class="cube-subcell">West</div><div class="cube-subcell">North</div>
+                  <div class="cube-subcell">South</div><div class="cube-subcell">Central</div><div class="cube-subcell">NE</div>
+                  <div class="cube-subcell">Himalaya</div><div class="cube-subcell">Deccan</div><div class="cube-subcell">Ghats</div>
+                </div>
+                <div class="olap-cube-face right">
+                  <div class="cube-subcell">Low</div><div class="cube-subcell">Low</div><div class="cube-subcell">Mod</div>
+                  <div class="cube-subcell">Low</div><div class="cube-subcell">Mod</div><div class="cube-subcell">High</div>
+                  <div class="cube-subcell">Safe</div><div class="cube-subcell">Safe</div><div class="cube-subcell">Alert</div>
+                </div>
+                <div class="olap-cube-face left">
+                  <div class="cube-subcell">Crime</div><div class="cube-subcell">Scam</div><div class="cube-subcell">Rain</div>
+                  <div class="cube-subcell">Fog</div><div class="cube-subcell">Night</div><div class="cube-subcell">Crowd</div>
+                  <div class="cube-subcell">Transit</div><div class="cube-subcell">Health</div><div class="cube-subcell">SOS</div>
+                </div>
+                <div class="olap-cube-face top">
+                  <div class="cube-subcell">Delhi</div><div class="cube-subcell">Jaipur</div><div class="cube-subcell">Goa</div>
+                  <div class="cube-subcell">Manali</div><div class="cube-subcell">Kashi</div><div class="cube-subcell">Kerala</div>
+                  <div class="cube-subcell">Leh</div><div class="cube-subcell">Agra</div><div class="cube-subcell">Shimla</div>
+                </div>
+                <div class="olap-cube-face bottom">
+                  <div class="cube-subcell">85%</div><div class="cube-subcell">90%</div><div class="cube-subcell">72%</div>
+                  <div class="cube-subcell">88%</div><div class="cube-subcell">64%</div><div class="cube-subcell">95%</div>
+                  <div class="cube-subcell">81%</div><div class="cube-subcell">79%</div><div class="cube-subcell">86%</div>
+                </div>
+                <!-- Slicing Laser Plane -->
+                <div class="olap-slice-laser" id="olapSliceLaser"></div>
+              </div>
+            </div>
+
+            <!-- Cube Axes Legend -->
+            <div class="olap-axes-legend">
+              <div class="olap-axis-item">
+                <div class="olap-axis-tag"><span class="axis-dot x"></span> <strong>X-Axis (Front):</strong></div>
+                <span>Category (Forts, Mountains, Beach)</span>
+              </div>
+              <div class="olap-axis-item">
+                <div class="olap-axis-tag"><span class="axis-dot y"></span> <strong>Y-Axis (Top):</strong></div>
+                <span>Region (North, South, East, West)</span>
+              </div>
+              <div class="olap-axis-item">
+                <div class="olap-axis-tag"><span class="axis-dot z"></span> <strong>Z-Axis (Side):</strong></div>
+                <span>Risk Tier (Low, Moderate, High)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Grid Results -->
+          <div class="olap-grid-card">
+            <div class="olap-grid-header">
+              <div class="olap-grid-title">
+                <i class="fa-solid fa-table-cells-large" style="color:#38bdf8;"></i> OLAP Telemetry Output
+              </div>
+              <span style="font-size:0.75rem;color:#94a3b8;">Direct from SQLite WAL Database</span>
+            </div>
+            <div id="olapTableHost">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incident History Archive Modal -->
+  <div id="incidentHistoryModal" class="pulse-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.85);backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#0f172a;border:1px solid rgba(255,255,255,0.12);border-radius:18px;max-width:850px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 25px 50px -12px rgba(0,0,0,0.7);overflow:hidden;">
+      <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center;background:rgba(15,23,42,0.95);">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(245,158,11,0.15);display:flex;align-items:center;justify-content:center;color:#f59e0b;font-size:1.1rem;">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+          </div>
+          <div>
+            <h3 style="font-size:1.1rem;color:#f8fafc;margin:0;">Historical Safety & Incident Archive</h3>
+            <p style="font-size:0.75rem;color:#94a3b8;margin:2px 0 0 0;">Official retrospective logs, cliff hazards, suicides, and infrastructure responses</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeFullHistoryModal()" style="background:transparent;border:none;color:#94a3b8;font-size:1.4rem;cursor:pointer;padding:4px 8px;">&times;</button>
+      </div>
+
+      <!-- Search & Filters Strip -->
+      <div style="padding:12px 20px;background:rgba(30,41,59,0.5);border-bottom:1px solid rgba(255,255,255,0.06);display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <div style="flex:1;min-width:200px;position:relative;">
+          <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#64748b;font-size:0.8rem;"></i>
+          <input type="text" id="historyModalSearchInput" oninput="window.filterHistoryModalArchive()" placeholder="Search incidents by place (e.g. Lohagad, Kedarnath, Baga)..." style="width:100%;padding:8px 12px 8px 30px;background:#0b1120;border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f8fafc;font-size:0.8rem;outline:none;">
+        </div>
+        <select id="historyModalCategorySelect" onchange="window.filterHistoryModalArchive()" style="padding:8px 12px;background:#0b1120;border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f8fafc;font-size:0.8rem;outline:none;">
+          <option value="All">All Incident Types</option>
+          <option value="Suicide">Suicide / Cliff Hazards</option>
+          <option value="Trekking">Trekking & Falls</option>
+          <option value="Flood">Floods & Landslides</option>
+          <option value="Drowning">Drowning & Maritime</option>
+          <option value="Crowd">Stampede & Crowd Surges</option>
+          <option value="Scam">Scams & Tout Rings</option>
+        </select>
+        <button type="button" onclick="window.loadFullHistoryModal()" style="padding:8px 12px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;border-radius:8px;font-size:0.78rem;cursor:pointer;">
+          <i class="fa-solid fa-arrows-rotate"></i> Refresh
+        </button>
+      </div>
+
+      <!-- Scrollable List of Historical Incidents -->
+      <div id="historyModalListContainer" style="padding:20px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:14px;">
+        <div style="text-align:center;padding:40px;color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Loading incident archive...</div>
       </div>
     </div>
   </div>
@@ -1296,6 +1600,7 @@
   <script src="/static/js/live_risk.js?v=risk1"></script>
   <script src="/static/js/incident_feed.js?v=risk1"></script>
   <script src="/static/js/sos_hub.js?v=risk1"></script>
+  <script src="/static/js/olap_analytics.js?v=olap1"></script>
   <script src="/static/js/app.js?v=risk1"></script>
 
   <!-- Inline Auth Helpers for Form Handling -->

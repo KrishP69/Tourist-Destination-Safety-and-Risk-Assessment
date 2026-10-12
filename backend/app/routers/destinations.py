@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from app.database import get_db
 from app.services.weather_service import fetch_live_weather
 from app.services.risk_service import calculate_safety_score
-from app.services.news_service import get_destination_news, get_national_travel_news
+from app.services.news_service import get_destination_news, get_national_travel_news, analyze_news_safety_impact
 import urllib.request
 import json
 
@@ -321,7 +321,13 @@ async def get_destination_details(
         cursor.execute("SELECT * FROM safety_advisories WHERE destination_id = ? AND is_active = 1 ORDER BY issued_at DESC", (dest_id,))
         advisories = [dict(r) for r in cursor.fetchall()]
 
-        cursor.execute("SELECT * FROM incidents WHERE destination_id = ? ORDER BY reported_at DESC LIMIT 10", (dest_id,))
+        cursor.execute("""
+            SELECT id, destination_id, title, category, severity, location_name,
+                   lat, lng, description, reported_at, incident_date, resolution_notes, prevention_measures, status
+            FROM incidents
+            WHERE destination_id = ?
+            ORDER BY reported_at DESC
+        """, (dest_id,))
         incidents = [dict(r) for r in cursor.fetchall()]
 
         cursor.execute("SELECT * FROM safety_tips WHERE destination_id = ?", (dest_id,))
@@ -346,10 +352,17 @@ async def get_destination_details(
         result["is_currently_open"] = is_open
         result["open_status_text"] = status_text
 
-        # Active incidents tagged
+        # Segregate active incidents vs historical archive
         for inc_item in incidents:
             inc_item["incident_type"] = inc_item.get("category", "Hazard")
         result["nearby_incidents"] = [i for i in incidents if i.get("status") in ("Active", "Verified")]
+        result["historical_incidents"] = [
+            i for i in incidents 
+            if i.get("status") in ("Historical Record", "Resolved", "Archived", "Closed") 
+            or "Historical" in str(i.get("status", "")) 
+            or "Resolved" in str(i.get("status", ""))
+        ]
+        result["history_count"] = len(result["historical_incidents"])
 
         if user_lat is not None and user_lon is not None:
             dist = calculate_haversine_distance(user_lat, user_lon, result["lat"], result["lng"])
@@ -359,10 +372,46 @@ async def get_destination_details(
             result["distance_km"] = None
             result["is_within_geofence"] = False
 
-        # Attach real-time Google News & Safety Bulletins
-        result["live_news"] = get_destination_news(result["name"], result.get("state", "India"))
+        # Attach real-time Google News & calculate dynamic risk impact on score
+        live_news = get_destination_news(result["name"], result.get("state", "India"))
+        news_impact = analyze_news_safety_impact(live_news)
+
+        base_score = int(result["overall_safety_score"])
+        news_penalty = news_impact.get("score_penalty", 0)
+        adjusted_score = max(5, min(99, base_score - news_penalty))
+
+        if adjusted_score >= 80:
+            adjusted_tier = "Low Risk (Safe)"
+        elif adjusted_score >= 60:
+            adjusted_tier = "Moderate Risk"
+        elif adjusted_score >= 40:
+            adjusted_tier = "High Caution"
+        else:
+            adjusted_tier = "Severe Risk"
+
+        result["live_news"] = live_news
+        result["news_impact"] = news_impact
+        result["base_safety_score"] = base_score
+        result["overall_safety_score"] = adjusted_score
+        result["risk_tier"] = adjusted_tier
 
         return result
+
+@router.get("/{dest_id}/history")
+def get_single_destination_history(dest_id: int):
+    """Fetches verified historical incident timeline and resolution notes for a destination"""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT i.*, d.name as destination_name, d.state as destination_state
+            FROM incidents i
+            JOIN destinations d ON i.destination_id = d.id
+            WHERE i.destination_id = ?
+              AND (i.status IN ('Historical Record', 'Resolved', 'Archived', 'Closed')
+                   OR i.status LIKE '%Historical%' OR i.status LIKE '%Resolved%')
+            ORDER BY i.reported_at DESC
+        """, (dest_id,))
+        return [dict(r) for r in cursor.fetchall()]
 
 @router.get("/{dest_id}/live-news")
 def get_single_destination_news(dest_id: int):

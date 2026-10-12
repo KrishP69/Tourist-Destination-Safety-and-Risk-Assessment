@@ -315,6 +315,25 @@ def estimate_current_crowd(destination_id: int) -> Dict[str, Any]:
         data_available = observed > 0 or booked > 0 or hist is not None or pulse_hint is not None
         is_demo = _demo_flag()
 
+        # DWM Module 4 Integration (Lab 4: Multiple Linear Regression & Lab 5: Decision Tree)
+        # When direct raw GPS counts are zero or unpopulated, use the Regression & Decision Tree models
+        dwm_meta = None
+        if not data_available or estimated_int == 0:
+            try:
+                from app.services.dwm_crowd_engine import compute_dwm_crowd_intelligence
+                dwm_out = compute_dwm_crowd_intelligence(dest, None, observed, booked)
+                estimated_int = dwm_out["estimated_crowd"]
+                occupancy = dwm_out["occupancy_percentage"]
+                density = dwm_out["density"]
+                level = dwm_out["crowd_level"]
+                trend_label = dwm_out["trend"]
+                trend_delta = dwm_out["trend_delta_30m"]
+                confidence = dwm_out["confidence"]
+                data_available = True
+                dwm_meta = dwm_out.get("dwm_models")
+            except Exception as e:
+                pass
+
         return {
             "destination_id": destination_id,
             "destination_name": dest["name"],
@@ -348,6 +367,7 @@ def estimate_current_crowd(destination_id: int) -> Dict[str, Any]:
             "unavailable_message": None
             if data_available
             else "Live crowd information currently unavailable.",
+            "dwm_models": dwm_meta,
         }
 
 

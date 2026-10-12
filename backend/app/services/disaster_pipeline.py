@@ -128,6 +128,7 @@ def run_disaster_pipeline() -> Dict[str, Any]:
             source_kind = "official" if bucket["official"] else "news"
             if bucket["official"] and scores["independent_sources"] > 1:
                 source_kind = "both"
+            is_active_val = 1 if ((scores["confidence_score"] >= 45 and scores["risk_level"] != "LOW") or bucket["official"]) else 0
 
             cursor.execute(
                 """
@@ -136,7 +137,7 @@ def run_disaster_pipeline() -> Dict[str, Any]:
                   location_label, lat, lng, radius_m, risk_score, risk_level, confidence_score,
                   official_alert, source_kind, independent_sources, article_count,
                   last_seen_at, expires_at, is_active, sources_json
-                ) VALUES (?, ?, ?, ?, 'India', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, 1, ?)
+                ) VALUES (?, ?, ?, ?, 'India', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?)
                 ON CONFLICT(event_key) DO UPDATE SET
                   title=excluded.title,
                   summary=excluded.summary,
@@ -149,7 +150,7 @@ def run_disaster_pipeline() -> Dict[str, Any]:
                   article_count=excluded.article_count,
                   last_seen_at=CURRENT_TIMESTAMP,
                   expires_at=excluded.expires_at,
-                  is_active=1,
+                  is_active=excluded.is_active,
                   sources_json=excluded.sources_json,
                   radius_m=excluded.radius_m
                 """,
@@ -173,6 +174,7 @@ def run_disaster_pipeline() -> Dict[str, Any]:
                     scores["independent_sources"],
                     scores["article_count"],
                     expires,
+                    is_active_val,
                     json.dumps(sources_payload),
                 ),
             )
@@ -198,6 +200,7 @@ def list_active_events(
         q = """
           SELECT * FROM disaster_risk_events
           WHERE is_active=1
+            AND confidence_score >= 45
             AND (expires_at IS NULL OR expires_at >= CURRENT_TIMESTAMP)
         """
         params: List[Any] = []

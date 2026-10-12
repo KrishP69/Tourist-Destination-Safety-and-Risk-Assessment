@@ -20,3 +20,10 @@ local.properties
 # OS files
 .DS_Store
 Thumbs.db
+
+# Database temporary files & logs
+*.db-wal
+*.db-shm
+*.log
+backend/test_images.py
+
