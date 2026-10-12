@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel
 from app.database import get_db
 from app.services.weather_service import fetch_live_weather
+from app.services.weather_aqi_service import fetch_complete_environmental_intelligence
 from app.services.risk_service import calculate_safety_score
 from app.services.news_service import get_destination_news, get_national_travel_news, analyze_news_safety_impact
 import urllib.request
@@ -323,20 +324,25 @@ async def sync_destination_live_weather(dest_id: int):
         new_score, new_tier = calculate_safety_score(m, crit_count)
         cursor.execute("UPDATE destinations SET overall_safety_score = ?, risk_tier = ? WHERE id = ?", (new_score, new_tier, dest_id))
 
+        env_intel = await fetch_complete_environmental_intelligence(
+            lat, lng, row["name"], row.get("state", "India"), row.get("category", "Monument"), force_refresh=True
+        )
+
         return {
             "success": True,
             "destination_id": dest_id,
             "name": row["name"],
             "live_weather": {
-                "temperature_c": temp,
-                "condition": condition,
-                "wind_kmh": wind,
-                "precipitation_mm": precip,
+                "temperature_c": env_intel["weather"]["temperature_c"],
+                "condition": env_intel["weather"]["condition"],
+                "wind_kmh": env_intel["weather"]["wind_speed_kmh"],
+                "precipitation_mm": env_intel["weather"]["precipitation_mm"],
                 "weather_risk_index": live_weather_risk
             },
+            "environmental_telemetry": env_intel,
             "overall_safety_score": new_score,
             "risk_tier": new_tier,
-            "message": f"Real-time weather synced: {temp}°C ({condition}). Safety index: {new_score}/100."
+            "message": f"Real-time weather synced: {env_intel['weather']['temperature_c']}°C ({env_intel['weather']['condition']}) • AQI: {env_intel['air_quality']['aqi_score']} ({env_intel['air_quality']['category']}). Safety index: {new_score}/100."
         }
 
 @router.get("/{dest_id}")
@@ -437,6 +443,19 @@ async def get_destination_details(
         result["base_safety_score"] = base_score
         result["overall_safety_score"] = adjusted_score
         result["risk_tier"] = adjusted_tier
+
+        # Real-time environmental telemetry (Weather, AQI, and Terrain Hazard Alerts)
+        try:
+            result["environmental_telemetry"] = await fetch_complete_environmental_intelligence(
+                lat=result["lat"],
+                lng=result["lng"],
+                name=result["name"],
+                state=result.get("state", "India"),
+                category=result.get("category", "Monument"),
+                force_refresh=False
+            )
+        except Exception:
+            result["environmental_telemetry"] = None
 
         return result
 

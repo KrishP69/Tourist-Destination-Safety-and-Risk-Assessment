@@ -22,7 +22,7 @@ from app.config import (
 )
 from app.seed_data import seed_database
 from app.routers import destinations, incidents, emergency, admin, auth, ground_pulse
-from app.routers import location, crowd, tickets, risk_events, analytics
+from app.routers import location, crowd, tickets, risk_events, analytics, weather_risk
 from app.services.demo_crowd_service import (
     is_demo_enabled,
     set_demo_mode,
@@ -136,6 +136,7 @@ app.include_router(crowd.router)
 app.include_router(tickets.router)
 app.include_router(risk_events.router)
 app.include_router(analytics.router)
+app.include_router(weather_risk.router)
 
 
 @app.get("/api/health", tags=["System"])

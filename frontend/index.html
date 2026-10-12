@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="/static/css/map.css?v=risk1">
   <link rel="stylesheet" href="/static/css/pulse.css?v=risk1">
   <link rel="stylesheet" href="/static/css/crowd.css?v=risk1">
-  <link rel="stylesheet" href="/static/css/ux.css?v=navfix2">
+  <link rel="stylesheet" href="/static/css/ux.css?v=env1">
   <link rel="stylesheet" href="/static/css/tourist.css?v=navfix2">
   <link rel="stylesheet" href="/static/css/destinations.css?v=dest3">
   <link rel="stylesheet" href="/static/css/live_risk.css?v=risk1">
@@ -686,7 +686,7 @@
           </div>
         </div>
 
-        <!-- Live Meteorological Hazard Telemetry Card -->
+        <!-- Live Atmospheric & AQI Telemetry Hub -->
         <div class="live-weather-card">
           <div class="weather-icon-box">
             <i class="fa-solid fa-cloud-sun weather-dynamic-icon" id="weatherDynamicIcon"></i>
@@ -695,13 +695,35 @@
             <div class="weather-temp-row">
               <span class="weather-temp-num" id="liveTempDisplay">--°C</span>
               <span class="weather-condition-tag" id="liveConditionDisplay">Checking Live Atmospheric Telemetry...</span>
+              <span class="aqi-badge-pill" id="liveAqiBadgePill" title="National Air Quality Index" style="display:none;">
+                <i class="fa-solid fa-wind"></i> AQI <strong id="liveAqiNum">--</strong> (<span id="liveAqiCategory">--</span>)
+              </span>
             </div>
             <div class="weather-meta-row">
               <span><i class="fa-solid fa-wind"></i> Wind: <strong id="liveWindDisplay">-- km/h</strong></span>
               <span>•</span>
               <span><i class="fa-solid fa-cloud-showers-heavy"></i> Precip: <strong id="livePrecipDisplay">-- mm</strong></span>
               <span>•</span>
-              <span class="live-sync-indicator"><i class="fa-solid fa-bolt"></i> Open-Meteo Live</span>
+              <span><i class="fa-solid fa-smog"></i> PM2.5: <strong id="livePm25Display">-- µg/m³</strong></span>
+              <span>•</span>
+              <span class="live-sync-indicator"><i class="fa-solid fa-bolt"></i> CPCB / Open-Meteo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-Time Terrain Hazard & Extreme Environmental Alert Banner (Landslide, High Tide, Smog, Heatwave) -->
+        <div id="detailEnvHazardAlertBanner" class="env-hazard-banner" style="display:none;">
+          <div class="env-hazard-icon-wrap" id="envHazardIconWrap">
+            <i class="fa-solid fa-mountain" id="envHazardIcon"></i>
+          </div>
+          <div class="env-hazard-content">
+            <div class="env-hazard-header">
+              <span class="env-hazard-badge" id="envHazardBadge">LANDSLIDE CAUTION</span>
+              <strong class="env-hazard-title" id="envHazardTitle">Ghat Slope & Flash Flood Warning</strong>
+            </div>
+            <p class="env-hazard-desc" id="envHazardDesc">Heavy rain detected. Mountain ascents, stone steps, and trails are slippery with landslide risks.</p>
+            <div class="env-hazard-advice" id="envHazardAdvice">
+              <i class="fa-solid fa-circle-exclamation"></i> <span id="envHazardAdviceText">Check local tourist police / forest department trail clearance before ascent.</span>
             </div>
           </div>
         </div>

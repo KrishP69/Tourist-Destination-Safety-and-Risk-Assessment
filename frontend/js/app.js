@@ -324,6 +324,11 @@ function populateDestinationDetails(dest) {
   riskBadge.className = `tier-pill ${tierInfo.cssClass}`;
   riskBadge.innerText = dest.risk_tier;
 
+  // Real-Time Environmental Telemetry & Terrain Hazard Models
+  if (dest.environmental_telemetry) {
+    renderEnvironmentalTelemetry(dest.environmental_telemetry);
+  }
+
   // Real-Time Hazard Alert Box (e.g. Landslide, High Tide, Flash Flood, Blizzard)
   const hazardBox = document.getElementById("detailHazardAlertBox");
   if (hazardBox) {
@@ -606,42 +611,122 @@ function populateDestinationDetails(dest) {
   }
 }
 
+// Render Complete Environmental & AQI Telemetry + Extreme Terrain Hazards
+function renderEnvironmentalTelemetry(env) {
+  if (!env) return;
+
+  // 1. Weather
+  if (env.weather) {
+    const w = env.weather;
+    const tempEl = document.getElementById("liveTempDisplay");
+    const condEl = document.getElementById("liveConditionDisplay");
+    const windEl = document.getElementById("liveWindDisplay");
+    const precipEl = document.getElementById("livePrecipDisplay");
+    const iconEl = document.getElementById("weatherDynamicIcon");
+
+    if (tempEl) tempEl.innerText = `${w.temperature_c}°C`;
+    if (condEl) condEl.innerText = w.condition;
+    if (windEl) windEl.innerText = `${w.wind_speed_kmh} km/h`;
+    if (precipEl) precipEl.innerText = `${w.precipitation_mm} mm`;
+
+    if (iconEl && w.icon) {
+      iconEl.className = `fa-solid ${w.icon} weather-dynamic-icon`;
+    }
+  }
+
+  // 2. Air Quality (AQI & PM2.5)
+  if (env.air_quality) {
+    const a = env.air_quality;
+    const aqiPill = document.getElementById("liveAqiBadgePill");
+    const aqiNum = document.getElementById("liveAqiNum");
+    const aqiCat = document.getElementById("liveAqiCategory");
+    const pm25El = document.getElementById("livePm25Display");
+
+    if (aqiPill) {
+      aqiPill.style.display = "inline-flex";
+      aqiPill.style.borderColor = a.color || "#84cc16";
+      aqiPill.style.color = a.color || "#84cc16";
+    }
+    if (aqiNum) aqiNum.innerText = a.aqi_score;
+    if (aqiCat) aqiCat.innerText = a.category;
+    if (pm25El) pm25El.innerText = `${a.pm2_5} µg/m³`;
+  }
+
+  // 3. Terrain Hazard Banner (Landslide, High Tide, Severe Smog, Heatwave)
+  const hazardBanner = document.getElementById("detailEnvHazardAlertBanner");
+  if (hazardBanner) {
+    if (env.has_active_hazard && env.hazard_alert) {
+      const h = env.hazard_alert;
+      hazardBanner.style.display = "flex";
+      hazardBanner.style.borderLeftColor = h.accent_color || "#f59e0b";
+
+      const iconWrap = document.getElementById("envHazardIconWrap");
+      const iconEl = document.getElementById("envHazardIcon");
+      const badgeEl = document.getElementById("envHazardBadge");
+      const titleEl = document.getElementById("envHazardTitle");
+      const descEl = document.getElementById("envHazardDesc");
+      const adviceEl = document.getElementById("envHazardAdviceText");
+
+      if (iconWrap) iconWrap.style.background = `${h.accent_color}22`;
+      if (iconEl) {
+        iconEl.className = `fa-solid ${h.icon || 'fa-triangle-exclamation'}`;
+        iconEl.style.color = h.accent_color || "#f59e0b";
+      }
+      if (badgeEl) {
+        badgeEl.innerText = h.badge_label || "HAZARD ADVISORY";
+        badgeEl.style.color = h.accent_color || "#f59e0b";
+        badgeEl.style.borderColor = `${h.accent_color}44`;
+      }
+      if (titleEl) titleEl.innerText = h.title;
+      if (descEl) descEl.innerText = h.description;
+      if (adviceEl) adviceEl.innerText = h.recommendation;
+    } else {
+      hazardBanner.style.display = "none";
+    }
+  }
+}
+
 // Single Spot Real-Time Live Sync
 async function syncSingleSpotLive(destId, showToastNotification = true) {
   try {
     const res = await fetch(`/api/destinations/${destId}/sync-live`, { method: "POST" });
     const data = await res.json();
-    if (data.success && data.live_weather) {
-      const w = data.live_weather;
-      document.getElementById("liveTempDisplay").innerText = `${w.temperature_c}°C`;
-      document.getElementById("liveConditionDisplay").innerText = w.condition;
-      document.getElementById("liveWindDisplay").innerText = `${w.wind_kmh} km/h`;
-      document.getElementById("livePrecipDisplay").innerText = `${w.precipitation_mm} mm`;
+    if (data.success) {
+      if (data.environmental_telemetry) {
+        renderEnvironmentalTelemetry(data.environmental_telemetry);
+      }
+      if (data.live_weather) {
+        const w = data.live_weather;
+        document.getElementById("liveTempDisplay").innerText = `${w.temperature_c}°C`;
+        document.getElementById("liveConditionDisplay").innerText = w.condition;
+        document.getElementById("liveWindDisplay").innerText = `${w.wind_kmh} km/h`;
+        document.getElementById("livePrecipDisplay").innerText = `${w.precipitation_mm} mm`;
 
-      const iconEl = document.getElementById("weatherDynamicIcon");
-      if (w.condition.includes("Thunderstorm")) iconEl.className = "fa-solid fa-cloud-bolt weather-dynamic-icon";
-      else if (w.condition.includes("Rain") || w.condition.includes("Drizzle")) iconEl.className = "fa-solid fa-cloud-showers-heavy weather-dynamic-icon";
-      else if (w.condition.includes("Snow")) iconEl.className = "fa-solid fa-snowflake weather-dynamic-icon";
-      else if (w.condition.includes("Clear")) iconEl.className = "fa-solid fa-sun weather-dynamic-icon";
-      else iconEl.className = "fa-solid fa-cloud-sun weather-dynamic-icon";
+        const iconEl = document.getElementById("weatherDynamicIcon");
+        if (w.condition.includes("Thunderstorm")) iconEl.className = "fa-solid fa-cloud-bolt weather-dynamic-icon";
+        else if (w.condition.includes("Rain") || w.condition.includes("Drizzle")) iconEl.className = "fa-solid fa-cloud-showers-heavy weather-dynamic-icon";
+        else if (w.condition.includes("Snow")) iconEl.className = "fa-solid fa-snowflake weather-dynamic-icon";
+        else if (w.condition.includes("Clear")) iconEl.className = "fa-solid fa-sun weather-dynamic-icon";
+        else iconEl.className = "fa-solid fa-cloud-sun weather-dynamic-icon";
 
-      const tierInfo = getTierDetails(data.risk_tier);
-      const scoreNum = document.getElementById("detailScoreNumber");
-      scoreNum.innerText = data.overall_safety_score;
-      scoreNum.style.color = tierInfo.color;
+        const tierInfo = getTierDetails(data.risk_tier);
+        const scoreNum = document.getElementById("detailScoreNumber");
+        scoreNum.innerText = data.overall_safety_score;
+        scoreNum.style.color = tierInfo.color;
 
-      const riskBadge = document.getElementById("detailRiskBadge");
-      riskBadge.className = `tier-pill ${tierInfo.cssClass}`;
-      riskBadge.innerText = data.risk_tier;
+        const riskBadge = document.getElementById("detailRiskBadge");
+        riskBadge.className = `tier-pill ${tierInfo.cssClass}`;
+        riskBadge.innerText = data.risk_tier;
 
-      const barWeather = document.getElementById("barWeather");
-      const valWeather = document.getElementById("valWeather");
-      valWeather.innerText = `${Math.round(w.weather_risk_index)}%`;
-      barWeather.style.width = `${Math.round(w.weather_risk_index)}%`;
-      barWeather.className = `progress-bar-fill ${w.weather_risk_index > 40 ? 'caution' : 'safe'}`;
+        const barWeather = document.getElementById("barWeather");
+        const valWeather = document.getElementById("valWeather");
+        valWeather.innerText = `${Math.round(w.weather_risk_index)}%`;
+        barWeather.style.width = `${Math.round(w.weather_risk_index)}%`;
+        barWeather.className = `progress-bar-fill ${w.weather_risk_index > 40 ? 'caution' : 'safe'}`;
 
-      if (showToastNotification) {
-        showLiveToast(`⚡ Live telemetry updated for ${data.name}: ${w.temperature_c}°C, ${w.condition}. Safety Score: ${data.overall_safety_score}/100.`);
+        if (showToastNotification) {
+          showLiveToast(`⚡ Live telemetry updated for ${data.name}: ${w.temperature_c}°C, ${w.condition}. Safety Score: ${data.overall_safety_score}/100.`);
+        }
       }
     }
   } catch(err) {
