@@ -176,6 +176,13 @@ const SmartBooking = {
         `;
         conf.classList.add("visible");
       }
+
+      // Direct to official site of destination in a new tab
+      const officialUrl = window.currentSelectedDestination?.booking_portal_url || "https://asi.payumoney.com";
+      if (officialUrl) {
+        window.open(officialUrl, "_blank", "noopener,noreferrer");
+      }
+
       this.showConfirmModal(data);
       await this.loadSlots();
       if (CrowdDashboard.currentDestId) CrowdDashboard.loadForDestination(CrowdDashboard.currentDestId);
@@ -195,13 +202,24 @@ const SmartBooking = {
     if (!modal || !details) return;
     const destName =
       data.destination_name || window.currentSelectedDestination?.name || "Destination";
+    const officialUrl = window.currentSelectedDestination?.booking_portal_url || "https://asi.payumoney.com";
+
     details.innerHTML = `
+      <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 10px; padding: 12px; margin-bottom: 12px; text-align: center;">
+        <span style="display: inline-block; color: #10b981; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px;">
+          <i class="fa-solid fa-circle-check"></i> Booked from SafeTour Bharat
+        </span>
+        <div style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.4;">
+          Official booking portal opened for <strong>${destName}</strong>.<br>
+          <span style="color: #94a3b8;">Your SafeTour slot reservation and visit reminder are saved below.</span>
+        </div>
+      </div>
       <div class="row"><span>Destination</span><b>${destName}</b></div>
       <div class="row"><span>Date</span><b>${data.slot_date}</b></div>
-      <div class="row"><span>Time</span><b>${data.start_time} – ${data.end_time}</b></div>
+      <div class="row"><span>Time Slot</span><b>${data.start_time} – ${data.end_time}</b></div>
       <div class="row"><span>Visitors</span><b>${data.number_of_people}</b></div>
-      <div class="row"><span>Booking ID</span><b>${data.booking_reference}</b></div>
-      <div class="row"><span>Status</span><b>Confirmed</b></div>
+      <div class="row"><span>SafeTour Ref</span><b>${data.booking_reference}</b></div>
+      <div class="row"><span>Official Site</span><a href="${officialUrl}" target="_blank" rel="noopener" style="color: #38bdf8; font-weight: 600;">Re-open Official Portal →</a></div>
     `;
     if (cal) {
       const title = encodeURIComponent(`SafeTour visit: ${destName}`);

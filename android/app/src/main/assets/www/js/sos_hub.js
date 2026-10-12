@@ -2,9 +2,9 @@
 
 let sosCountdownTimer = null;
 let countdownRemaining = 5;
+let isSosDispatching = false;
 
 function initSosHub() {
-  const triggerBtn = document.getElementById("triggerSosBtn");
   const modal = document.getElementById("sosPanicModal");
   const cancelBtn = document.getElementById("cancelSosBtn");
   const confirmBtn = document.getElementById("instantSosConfirmBtn");
@@ -18,14 +18,21 @@ function initSosHub() {
   const startCountdown = () => {
     modal.style.display = "flex";
     countdownRemaining = 5;
+    isSosDispatching = false;
     timerDisplay.innerText = countdownRemaining;
     timerDisplay.style.color = "#ef4444";
 
     // Play alert audio
-    try { alertAudio?.play(); } catch(e){}
+    try {
+      if (alertAudio) {
+        alertAudio.currentTime = 0;
+        alertAudio.play().catch(() => {});
+      }
+    } catch(e){}
 
     // Try to get real navigator geolocation
     if (navigator.geolocation) {
+      coordsDisplay.innerText = "Acquiring GPS fix...";
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const lat = pos.coords.latitude.toFixed(4);
@@ -38,10 +45,16 @@ function initSosHub() {
           coordsDisplay.innerText = "28.6139° N, 77.2090° E (IP Geolocation)";
           window.currentLat = 28.6139;
           window.currentLng = 77.2090;
-        }
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
       );
+    } else {
+      coordsDisplay.innerText = "28.6139° N, 77.2090° E (IP Geolocation)";
+      window.currentLat = 28.6139;
+      window.currentLng = 77.2090;
     }
 
+    clearInterval(sosCountdownTimer);
     sosCountdownTimer = setInterval(() => {
       countdownRemaining--;
       timerDisplay.innerText = countdownRemaining;
@@ -54,16 +67,35 @@ function initSosHub() {
 
   const abortSos = () => {
     clearInterval(sosCountdownTimer);
+    countdownRemaining = 5;
+    isSosDispatching = false;
+    timerDisplay.innerText = "5";
+    timerDisplay.style.color = "#ef4444";
     modal.style.display = "none";
     try {
-      sirenAudio?.pause();
-      sirenAudio.currentTime = 0;
+      if (alertAudio) {
+        alertAudio.pause();
+        alertAudio.currentTime = 0;
+      }
+      if (sirenAudio) {
+        sirenAudio.pause();
+        sirenAudio.currentTime = 0;
+      }
     } catch(e){}
   };
 
   const dispatchSosPayload = async () => {
+    if (isSosDispatching) return;
+    isSosDispatching = true;
     clearInterval(sosCountdownTimer);
-    try { sirenAudio?.play(); } catch(e){}
+
+    try {
+      if (alertAudio) {
+        alertAudio.pause();
+        alertAudio.currentTime = 0;
+      }
+      sirenAudio?.play().catch(() => {});
+    } catch(e){}
 
     const lat = window.currentLat || 28.6139;
     const lng = window.currentLng || 77.2090;
@@ -79,6 +111,10 @@ function initSosHub() {
           notes: "Live distress coordinates transmitted."
         })
       });
+
+      if (!res.ok) {
+        throw new Error("Server status: " + res.status);
+      }
 
       const data = await res.json();
       timerDisplay.innerText = "SENT";
@@ -98,10 +134,34 @@ function initSosHub() {
       }
     } catch(err) {
       console.error("SOS dispatch error:", err);
+      timerDisplay.innerText = "ERR";
+      timerDisplay.style.color = "#ef4444";
+      const listContainer = document.getElementById("sosNearestFacilities");
+      if (listContainer) {
+        listContainer.innerHTML = `
+          <div style="background:rgba(239,68,68,0.15); border:1px solid #ef4444; color:#fca5a5; padding:8px 10px; border-radius:6px; font-size:11px; margin-top:8px;">
+            Connection error. Please call national emergency directly: <a href="tel:112" style="color:#60a5fa; font-weight:700;">112</a> or Tourist Helpline: <a href="tel:1364" style="color:#60a5fa; font-weight:700;">1364</a>.
+          </div>
+        `;
+      }
     }
   };
 
-  triggerBtn?.addEventListener("click", startCountdown);
+  // Exposed for press-and-hold SOS from UxShell (avoids accidental taps)
+  window.__safetourStartSos = startCountdown;
+
   cancelBtn?.addEventListener("click", abortSos);
   confirmBtn?.addEventListener("click", dispatchSosPayload);
+
+  // Dismiss on Escape key or backdrop click
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.style.display === "flex") {
+      abortSos();
+    }
+  });
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      abortSos();
+    }
+  });
 }

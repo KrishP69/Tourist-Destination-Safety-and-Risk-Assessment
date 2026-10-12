@@ -327,6 +327,18 @@ function initSosHub() {
   cancelBtn?.addEventListener("click", abortSos);
   confirmBtn?.addEventListener("click", dispatchSosPayload);
   deescalateBtn?.addEventListener("click", deescalateSos);
+
+  // Dismiss on Escape key or backdrop click
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal && modal.style.display === "flex") {
+      abortSos();
+    }
+  });
+  modal?.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      abortSos();
+    }
+  });
 }
 
 // Auto-initialize when DOM is ready

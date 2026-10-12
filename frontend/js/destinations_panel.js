@@ -58,6 +58,14 @@ const DestinationsPanel = {
       if (source?.length) this.render(source);
     });
 
+    window.addEventListener("preferencesChanged", () => {
+      const source =
+        typeof allDestinationsData !== "undefined" && allDestinationsData.length
+          ? allDestinationsData
+          : this._lastDests;
+      if (source?.length) this.render(source);
+    });
+
     this.updateLocationBanner();
   },
 
@@ -297,6 +305,11 @@ const DestinationsPanel = {
             <span>${hours}</span>
           </p>
           <div class="dest-modern-footer">
+            ${
+              dest.is_personalized_match
+                ? `<span class="dest-chip personalized-chip" style="background:rgba(56,189,248,0.18);color:#38bdf8;border:1px solid rgba(56,189,248,0.35);font-size:0.68rem;padding:2px 7px;border-radius:12px;font-weight:600;"><i class="fa-solid fa-sparkles"></i> For You</span>`
+                : ""
+            }
             ${alert}
             <span class="dest-view-link">View details <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
           </div>
@@ -407,12 +420,24 @@ const DestinationsPanel = {
           viewAllBtn.innerHTML = `Browse all destinations <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>`;
         }
       }
+      const prefs = window.AuthService?.getPreferences?.();
+      const hasPrefs = !!(prefs && (prefs.travel_taste || prefs.age_group));
+
       if (otherTitle) otherTitle.textContent = "Other destinations";
-      if (otherHint) otherHint.textContent = "Further away or outside your nearby radius";
+      if (otherHint) {
+        otherHint.textContent = hasPrefs
+          ? `Personalized for ${prefs.travel_taste || 'All'} (${prefs.age_group || 'All ages'}) • Matching spots prioritized`
+          : "Further away or outside your nearby radius";
+      }
 
       const others = enriched
         .filter((d) => !nearbyIds.has(d.id))
         .sort((a, b) => {
+          if (hasPrefs) {
+            const aMatch = a.is_personalized_match ? 1 : 0;
+            const bMatch = b.is_personalized_match ? 1 : 0;
+            if (aMatch !== bMatch) return bMatch - aMatch;
+          }
           if (a._distanceKm == null && b._distanceKm == null) return 0;
           if (a._distanceKm == null) return 1;
           if (b._distanceKm == null) return -1;
@@ -433,21 +458,33 @@ const DestinationsPanel = {
         viewAllBtn.hidden = true;
         viewAllBtn.classList.add("dest-panel-hidden");
       }
+      const prefs = window.AuthService?.getPreferences?.();
+      const hasPrefs = !!(prefs && (prefs.travel_taste || prefs.age_group));
+
       if (otherTitle) otherTitle.textContent = hasLoc ? "All destinations" : "Destinations";
-      if (otherHint)
-        otherHint.textContent = hasLoc
-          ? "Sorted by distance from you"
-          : "Select any spot for safety ratings, on-site pulse & emergency services";
+      if (otherHint) {
+        otherHint.textContent = hasPrefs
+          ? `Personalized for ${prefs.travel_taste || 'All'} (${prefs.age_group || 'All ages'}) • Recommended for you`
+          : (hasLoc
+              ? "Sorted by distance from you"
+              : "Select any spot for safety ratings, on-site pulse & emergency services");
+      }
 
       let list = [...enriched];
-      if (hasLoc) {
-        list.sort((a, b) => {
+      list.sort((a, b) => {
+        if (hasPrefs) {
+          const aMatch = a.is_personalized_match ? 1 : 0;
+          const bMatch = b.is_personalized_match ? 1 : 0;
+          if (aMatch !== bMatch) return bMatch - aMatch;
+        }
+        if (hasLoc) {
           if (a._distanceKm == null && b._distanceKm == null) return 0;
           if (a._distanceKm == null) return 1;
           if (b._distanceKm == null) return -1;
           return a._distanceKm - b._distanceKm;
-        });
-      }
+        }
+        return (b.overall_safety_score || 0) - (a.overall_safety_score || 0);
+      });
       otherGrid.innerHTML = list.map((d) => this.buildCard(d)).join("");
       this.bindCardClicks(otherGrid);
     }
