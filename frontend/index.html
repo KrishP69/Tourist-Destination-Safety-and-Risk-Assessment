@@ -1588,9 +1588,24 @@
         </button>
       </div>
 
+      <!-- Analysis Dual-Engine Navigation Tabs -->
+      <div class="analysis-tabs-bar">
+        <button type="button" class="analysis-tab-btn active" id="tabBtnOlapCube">
+          <i class="fa-solid fa-cube"></i>
+          <span>3D OLAP Cube &amp; Telemetry</span>
+        </button>
+        <button type="button" class="analysis-tab-btn" id="tabBtnHealthFitness">
+          <i class="fa-solid fa-heart-pulse" style="color:#ef4444;"></i>
+          <span>Health, Altitude &amp; Fitness Assessment</span>
+          <span class="analysis-ml-badge">CART &amp; MLR</span>
+        </button>
+      </div>
+
       <div class="olap-modal-body">
-        <!-- Live KPI Overview -->
-        <div class="olap-kpi-grid">
+        <!-- TAB 1: 3D OLAP Cube & Multi-Dimensional Aggregation (Preserved 100%) -->
+        <div id="olapCubeTabPane" class="analysis-tab-pane">
+          <!-- Live KPI Overview -->
+          <div class="olap-kpi-grid">
           <div class="olap-kpi-card">
             <div class="olap-kpi-icon users"><i class="fa-solid fa-users"></i></div>
             <div class="olap-kpi-info">
@@ -1731,6 +1746,115 @@
             </div>
             <div id="olapTableHost">
               <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: Health, Altitude & Physical Fitness ML Assessment -->
+      <div id="healthFitnessTabPane" class="analysis-tab-pane hidden">
+        <div class="health-fitness-container">
+          <!-- Left Column: Interactive Questionnaire Form -->
+          <div class="health-form-card">
+            <div class="health-form-header">
+              <h3><i class="fa-solid fa-heart-pulse" style="color:#ef4444;"></i> Traveler Medical &amp; Terrain Feasibility</h3>
+              <p>Machine Learning (CART Decision Tree &amp; Multiple Linear Regression) cross-references destination elevation, stair volume, and clinical contraindications.</p>
+            </div>
+
+            <!-- Question 1: Target Destination -->
+            <div class="health-field-group">
+              <label for="healthAssessDestSelect"><i class="fa-solid fa-location-dot" style="color:#38bdf8;"></i> 1. Select Destination to Evaluate</label>
+              <select id="healthAssessDestSelect" class="health-select">
+                <option value="" disabled selected>Loading destinations list...</option>
+              </select>
+              <div id="healthDestQuickBadge" class="health-dest-quick-badge"></div>
+            </div>
+
+            <!-- Question 2: Age -->
+            <div class="health-field-group">
+              <label for="healthAssessAge"><i class="fa-regular fa-calendar" style="color:#38bdf8;"></i> 2. What is your age?</label>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <input type="number" id="healthAssessAge" min="5" max="105" value="30" class="health-input" style="width:110px;">
+                <span id="healthAgeGroupTag" class="health-dest-quick-badge" style="display:inline-block;margin:0;">Adult (18–59 yrs)</span>
+              </div>
+            </div>
+
+            <!-- Question 3: Pre-existing Conditions -->
+            <div class="health-field-group">
+              <label><i class="fa-solid fa-notes-medical" style="color:#ef4444;"></i> 3. Pre-existing health or mobility conditions?</label>
+              <div class="health-check-group" id="healthConditionsGroup">
+                <label class="health-check-pill" data-val="respiratory">
+                  <input type="checkbox" name="health_cond" value="respiratory">
+                  <i class="fa-solid fa-lungs"></i> Asthma / Respiratory
+                </label>
+                <label class="health-check-pill" data-val="cardiac">
+                  <input type="checkbox" name="health_cond" value="cardiac">
+                  <i class="fa-solid fa-heart-pulse"></i> Heart / Hypertension
+                </label>
+                <label class="health-check-pill" data-val="mobility">
+                  <input type="checkbox" name="health_cond" value="mobility">
+                  <i class="fa-solid fa-person-cane"></i> Knee / Joint Arthritis
+                </label>
+                <label class="health-check-pill" data-val="pregnancy">
+                  <input type="checkbox" name="health_cond" value="pregnancy">
+                  <i class="fa-solid fa-person-pregnant"></i> Pregnancy
+                </label>
+                <label class="health-check-pill" data-val="vertigo">
+                  <input type="checkbox" name="health_cond" value="vertigo">
+                  <i class="fa-solid fa-compass"></i> Vertigo / Acrophobia
+                </label>
+                <label class="health-check-pill active" data-val="none">
+                  <input type="checkbox" name="health_cond" value="none" checked>
+                  <i class="fa-solid fa-circle-check"></i> None / Healthy
+                </label>
+              </div>
+            </div>
+
+            <!-- Question 4: Altitude Sensitivity -->
+            <div class="health-field-group">
+              <label for="healthAssessAltitude"><i class="fa-solid fa-mountain" style="color:#a855f7;"></i> 4. Sensitivity to High Altitudes (&gt; 2,500m)?</label>
+              <select id="healthAssessAltitude" class="health-select">
+                <option value="none" selected>Normal / No Prior Acute Mountain Sickness (AMS)</option>
+                <option value="sensitive">Prone to AMS, dizziness or severe headaches at altitude</option>
+                <option value="first_time">First time visiting high altitude (never above 2,500m)</option>
+              </select>
+            </div>
+
+            <!-- Question 5: Physical Stamina -->
+            <div class="health-field-group">
+              <label for="healthAssessStamina"><i class="fa-solid fa-person-walking" style="color:#10b981;"></i> 5. Daily Physical Fitness / Stamina Level?</label>
+              <select id="healthAssessStamina" class="health-select">
+                <option value="moderate" selected>Moderate (Can comfortably walk 2–5 km &amp; standard steps)</option>
+                <option value="sedentary">Sedentary (Minimal walking, prefers flat ground/cabs)</option>
+                <option value="endurance">High Endurance / Trekker (Enjoys steep ascents &amp; rugged terrain)</option>
+              </select>
+            </div>
+
+            <!-- Question 6: Travel Companions -->
+            <div class="health-field-group">
+              <label for="healthAssessCompanions"><i class="fa-solid fa-people-group" style="color:#f59e0b;"></i> 6. Traveling with?</label>
+              <select id="healthAssessCompanions" class="health-select">
+                <option value="solo_adults" selected>Solo / Adults Only</option>
+                <option value="with_seniors">With Senior Citizens (60+ yrs)</option>
+                <option value="with_infants">With Infants / Toddlers (&lt; 5 yrs)</option>
+              </select>
+            </div>
+
+            <!-- Evaluation Action Row -->
+            <div class="health-action-row">
+              <button type="button" id="btnRunHealthAssessment" class="health-btn-evaluate">
+                <i class="fa-solid fa-play"></i> Run ML Feasibility Assessment
+              </button>
+              <span class="health-hint-text"><i class="fa-solid fa-keyboard"></i> Press Enter to evaluate</span>
+            </div>
+          </div>
+
+          <!-- Right Column: Machine Learning Assessment Results -->
+          <div class="health-results-card" id="healthResultsContainer">
+            <div class="health-empty-state">
+              <i class="fa-solid fa-heart-pulse"></i>
+              <h4 style="margin:0;color:#f8fafc;font-size:1.1rem;">Ready for Clinical &amp; Terrain Feasibility Analysis</h4>
+              <p style="margin:0;font-size:0.8rem;max-width:380px;">Select your intended destination and health details on the left, then click <strong>Run ML Feasibility Assessment</strong> or press <strong>Enter</strong>.</p>
             </div>
           </div>
         </div>

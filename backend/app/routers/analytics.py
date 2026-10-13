@@ -3,8 +3,13 @@ Analytics router — exposes OLAP cube and K-Means clustering endpoints.
 All endpoints are read-only and publicly accessible (no auth required).
 """
 from fastapi import APIRouter, HTTPException, Query
-from typing import Optional, List
-
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, Field
+from app.database import get_db
+from app.services.health_fitness_engine import (
+    evaluate_health_and_altitude_fitness,
+    get_destination_physical_profile,
+)
 from app.services.olap_kmeans import (
     build_olap_cube,
     olap_drill_down,
@@ -17,7 +22,17 @@ from app.services.olap_kmeans import (
     OLAP_DIMENSIONS,
 )
 
-router = APIRouter(prefix="/api/analytics", tags=["Analytics — OLAP & Clustering"])
+router = APIRouter(prefix="/api/analytics", tags=["Analytics — OLAP, Health & Clustering"])
+
+
+class HealthFitnessAssessmentPayload(BaseModel):
+    destination_id: int
+    age: int = Field(30, ge=1, le=110, description="Age in years")
+    health_conditions: List[str] = Field(default_factory=list, description="List of conditions: respiratory, cardiac, mobility, pregnancy, vertigo, none")
+    altitude_sensitivity: str = Field("none", description="none, sensitive, first_time")
+    stamina_level: str = Field("moderate", description="sedentary, moderate, endurance")
+    travel_companions: str = Field("solo_adults", description="solo_adults, with_seniors, with_infants")
+
 
 
 @router.get("/olap/cube")
@@ -197,3 +212,54 @@ def get_full_analytics_report(
         return full_analytics_report(k=k)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analytics report error: {str(e)}")
+
+
+@router.get("/destinations-list")
+def get_analysis_destinations_list():
+    """
+    Returns all destinations with terrain profiles and IDs for the Health & Altitude dropdown.
+    """
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, name, state, region, category, overall_safety_score
+            FROM destinations
+            ORDER BY name ASC
+        """)
+        rows = [dict(r) for r in cursor.fetchall()]
+
+    for r in rows:
+        prof = get_destination_physical_profile(r)
+        r["elevation_m"] = prof["elevation_m"]
+        r["difficulty_grade"] = prof["difficulty_grade"]
+        r["difficulty_label"] = prof["difficulty_label"]
+        r["stair_count"] = prof["stair_count"]
+
+    return {
+        "status": "success",
+        "total_destinations": len(rows),
+        "destinations": rows
+    }
+
+
+@router.post("/health-fitness-assessment")
+def perform_health_fitness_assessment(payload: HealthFitnessAssessmentPayload):
+    """
+    Evaluates personalized visit feasibility using CART Decision Trees, Multiple Linear Regression (MLR),
+    and Random Forest feature importance.
+    """
+    try:
+        user_dict = {
+            "age": payload.age,
+            "health_conditions": payload.health_conditions,
+            "altitude_sensitivity": payload.altitude_sensitivity,
+            "stamina_level": payload.stamina_level,
+            "travel_companions": payload.travel_companions,
+        }
+        result = evaluate_health_and_altitude_fitness(payload.destination_id, user_dict)
+        return result
+    except ValueError as ve:
+        raise HTTPException(status_code=404, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Assessment error: {str(e)}")
+
